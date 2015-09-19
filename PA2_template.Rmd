@@ -12,6 +12,11 @@ output:
 
 ## Synopsis
 
+Answer these two questions:
+
+1. Across the United States, which types of events (as indicated in the EVTYPE variable) are most harmful with respect to population health?
+1. Across the United States, which types of events have the greatest economic consequences?
+
 <br />
 <hr />
 
@@ -41,6 +46,17 @@ opts_chunk$set(echo = TRUE,
 
 <br />
 <hr />
+
+```{r}
+
+# We only need the injury and fatality counts to answer the first question and the property and crop damage for the second question. This will allow us to not load the values we don't need, saving memory and processing time
+col_classes <- c("NULL", "NULL", "NULL", "NULL", "NULL", "NULL", "NULL", "character", "NULL", "NULL", "NULL", "NULL", "NULL", "NULL", "NULL", "NULL", "NULL", "NULL", "NULL", "NULL", "NULL", "NULL", "numeric", "numeric", "numeric", "character", "numeric", "character", "NULL", "NULL", "NULL", "NULL", "NULL", "NULL", "NULL", "NULL", "NULL")
+my.file <- bzfile("repdata_data_StormData.csv.bz2")
+my.data <- (read.csv(my.file, colClasses = col_classes))
+my.factor <- as.factor(my.data$EVTYPE)
+summary(my.factor)
+
+```
 
 ## Results
 
