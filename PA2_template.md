@@ -83,6 +83,9 @@ col_classes <- c("NULL", "NULL", "NULL", "NULL", "NULL", "NULL", "NULL",
 storm.file <- bzfile("repdata_data_StormData.csv.bz2")
 storm.data <- data.table(read.csv(storm.file, colClasses = col_classes))
 
+# most event entries do not have any reported fatalities, injuries, or damages. Filter those out
+storm.subset <- storm.data[!(FATALITIES == 0 & INJURIES == 0 & PROPDMG == 0 & CROPDMG == 0), ]
+
 # Just for sanity checks. Not really needed for analysis
 my.factor <- as.factor(storm.data$EVTYPE)
 summary(my.factor)
@@ -666,7 +669,9 @@ questions.
 
 
 ```r
-event.list <- c("Astronomical Low Tide", "Avalanche", "Blizzard", "Coastal Flood", 
+# these are NOAA's weather events. Use this list to clean up the values found in the input file
+event.list <- c(
+              "Astronomical Low Tide", "Avalanche", "Blizzard", "Coastal Flood", 
                 "Cold/Wind Chill", "Debris Flow", "Dense Fog", "Dense Smoke", 
                 "Drought", "Dust Devil", "Dust Storm", "Excessive Heat", 
                 "Extreme Cold/Wind Chill", "Flash Flood", "Flood", "Freezing Fog",
@@ -678,6 +683,29 @@ event.list <- c("Astronomical Low Tide", "Avalanche", "Blizzard", "Coastal Flood
                 "Storm Tide", "Strong Wind", "Thunderstorm Wind", "Tornado", 
                 "Tropical Depression", "Tropical Storm", "Tsunami", "Volcanic Ash", 
                 "Waterspout", "Wildfire", "Winter Storm", "Winter Weather")
+event.list <- data.table(event.list)
+event.list <- mutate(event.list, search = toupper(event.list))
+setkey(event.list, search)
+
+# add a variable in our data set to store the cleaned up version of the event type
+storm.subset <- mutate(storm.subset, search = toupper(EVTYPE))
+setkey(storm.subset, search)
+
+storm.set1 <- left_join(storm.subset, event.list, by = c("search" = "search"))
+
+sum(is.na(storm.set1$event.list))
+```
+
+```
+## [1] 81736
+```
+
+```r
+sum(!is.na(storm.set1$event.list))
+```
+
+```
+## [1] 172897
 ```
 
 ## Results

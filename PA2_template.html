@@ -130,6 +130,9 @@ col_classes &lt;- c(&quot;NULL&quot;, &quot;NULL&quot;, &quot;NULL&quot;, &quot;
 storm.file &lt;- bzfile(&quot;repdata_data_StormData.csv.bz2&quot;)
 storm.data &lt;- data.table(read.csv(storm.file, colClasses = col_classes))
 
+# most event entries do not have any reported fatalities, injuries, or damages. Filter those out
+storm.subset &lt;- storm.data[!(FATALITIES == 0 &amp; INJURIES == 0 &amp; PROPDMG == 0 &amp; CROPDMG == 0), ]
+
 # Just for sanity checks. Not really needed for analysis
 my.factor &lt;- as.factor(storm.data$EVTYPE)
 summary(my.factor)</code></pre>
@@ -696,7 +699,9 @@ summary(my.factor)</code></pre>
 ## [983] &quot;Wintry Mix&quot;                     &quot;WINTRY MIX&quot;                    
 ## [985] &quot;WND&quot;</code></pre>
 <p>There are 48 weather events categorized by NOAA. The input data has 985. In order to analyze the data and find the most dangerous and expensive events we much clean up the <code>EVTYPE</code> field in the input file. This applies to answering both questions.</p>
-<pre class="r"><code>event.list &lt;- c(&quot;Astronomical Low Tide&quot;, &quot;Avalanche&quot;, &quot;Blizzard&quot;, &quot;Coastal Flood&quot;, 
+<pre class="r"><code># these are NOAA's weather events. Use this list to clean up the values found in the input file
+event.list &lt;- c(
+              &quot;Astronomical Low Tide&quot;, &quot;Avalanche&quot;, &quot;Blizzard&quot;, &quot;Coastal Flood&quot;, 
                 &quot;Cold/Wind Chill&quot;, &quot;Debris Flow&quot;, &quot;Dense Fog&quot;, &quot;Dense Smoke&quot;, 
                 &quot;Drought&quot;, &quot;Dust Devil&quot;, &quot;Dust Storm&quot;, &quot;Excessive Heat&quot;, 
                 &quot;Extreme Cold/Wind Chill&quot;, &quot;Flash Flood&quot;, &quot;Flood&quot;, &quot;Freezing Fog&quot;,
@@ -707,7 +712,21 @@ summary(my.factor)</code></pre>
                 &quot;Marine Thunderstorm Wind&quot;, &quot;Rip Current&quot;, &quot;Seiche&quot;, &quot;Sleet&quot;, 
                 &quot;Storm Tide&quot;, &quot;Strong Wind&quot;, &quot;Thunderstorm Wind&quot;, &quot;Tornado&quot;, 
                 &quot;Tropical Depression&quot;, &quot;Tropical Storm&quot;, &quot;Tsunami&quot;, &quot;Volcanic Ash&quot;, 
-                &quot;Waterspout&quot;, &quot;Wildfire&quot;, &quot;Winter Storm&quot;, &quot;Winter Weather&quot;)</code></pre>
+                &quot;Waterspout&quot;, &quot;Wildfire&quot;, &quot;Winter Storm&quot;, &quot;Winter Weather&quot;)
+event.list &lt;- data.table(event.list)
+event.list &lt;- mutate(event.list, search = toupper(event.list))
+setkey(event.list, search)
+
+# add a variable in our data set to store the cleaned up version of the event type
+storm.subset &lt;- mutate(storm.subset, search = toupper(EVTYPE))
+setkey(storm.subset, search)
+
+storm.set1 &lt;- left_join(storm.subset, event.list, by = c(&quot;search&quot; = &quot;search&quot;))
+
+sum(is.na(storm.set1$event.list))</code></pre>
+<pre><code>## [1] 81736</code></pre>
+<pre class="r"><code>sum(!is.na(storm.set1$event.list))</code></pre>
+<pre><code>## [1] 172897</code></pre>
 </div>
 <div id="results" class="section level2">
 <h2>Results</h2>
