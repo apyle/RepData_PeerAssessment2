@@ -727,7 +727,20 @@ storm.set1 &lt;- left_join(storm.subset, event.list, by = c(&quot;search&quot; =
 records.total &lt;- count(storm.set1)
 records.unmatched &lt;- sum(is.na(storm.set1$event.list))
 records.matched &lt;- sum(!is.na(storm.set1$event.list))
-records.ratio &lt;- round(records.matched / records.total, 3)</code></pre>
+records.ratio &lt;- round(records.matched / records.total, 3)
+
+# Now create fields for actual property and crop costs
+storm.set1 &lt;- mutate(storm.set1, prop.total = PROPDMG, crop.total = CROPDMG)
+
+# property rows we need to adjust 
+propK &lt;- storm.set1$PROPDMGEXP == &quot;K&quot;
+propM &lt;- storm.set1$PROPDMGEXP == &quot;M&quot;
+propB &lt;- storm.set1$PROPDMGEXP == &quot;B&quot;
+
+# crop rows we need to adjust
+cropK &lt;- storm.set1$CROPDMGEXP == &quot;K&quot;
+cropM &lt;- storm.set1$CROPDMGEXP == &quot;M&quot;
+cropB &lt;- storm.set1$CROPDMGEXP == &quot;B&quot;</code></pre>
 <p>There are a total of 254633 records of which we have matched 172897 for a total of 67.9%.</p>
 <pre class="r"><code>#
 ## most of the records were coded with the correct EVTYPE, i.e., the ones in the NOAA weather event list.

@@ -698,6 +698,19 @@ records.total <- count(storm.set1)
 records.unmatched <- sum(is.na(storm.set1$event.list))
 records.matched <- sum(!is.na(storm.set1$event.list))
 records.ratio <- round(records.matched / records.total, 3)
+
+# Now create fields for actual property and crop costs
+storm.set1 <- mutate(storm.set1, prop.total = PROPDMG, crop.total = CROPDMG)
+
+# property rows we need to adjust 
+propK <- storm.set1$PROPDMGEXP == "K"
+propM <- storm.set1$PROPDMGEXP == "M"
+propB <- storm.set1$PROPDMGEXP == "B"
+
+# crop rows we need to adjust
+cropK <- storm.set1$CROPDMGEXP == "K"
+cropM <- storm.set1$CROPDMGEXP == "M"
+cropB <- storm.set1$CROPDMGEXP == "B"
 ```
 
 There are a total of 254633 records of which we have matched 172897 for a total of 67.9%.
