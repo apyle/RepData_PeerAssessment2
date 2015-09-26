@@ -109,24 +109,67 @@ setkey(storm.subset, search)
 
 storm.set1 <- left_join(storm.subset, event.list, by = c("search" = "search"))
 
-storm.set1$search <- ifelse(storm.set1$EVTYPE == "THUNDERSTORM WINDS", "THUNDERSTORM WIND", storm.set1$EVTYPE)
-storm.set1$event.list <- ifelse(storm.set1$EVTYPE == "THUNDERSTORM WINDS", "Thunderstorm Wind", storm.set1$EVTYPE)
-my.tmp <- grep("MARINE TSTM WIND", storm.set1$EVTYPE)
-storm.set1$search[my.tmp ] <- "Marine Thunderstorm Wind"
-storm.set1$event.list[my.tmp ] <- "Marine Thunderstorm Wind"
+# how many are matched with good EVTYPE values?
+records.total <- count(storm.set1)
+records.unmatched <- sum(is.na(storm.set1$event.list))
+records.matched <- sum(!is.na(storm.set1$event.list))
+records.ratio <- round(records.matched / records.total, 3)
+```
 
-# but not grep("TSTM WIND", storm.set1$EVTYPE)
-my.tmp <- storm.set1[(is.na(storm.set1$event.list) & storm.set1$EVTYPE == "TSTM WIND")]
+There are a total of `r records.total` records of which we have matched `r records.matched` for a total of `r records.ratio * 100`%.
 
+```{r}
+#
+## most of the records were coded with the correct EVTYPE, i.e., the ones in the NOAA weather event list.
+## Now we need to clean up as many of the incorrectly coded EVTYPEs
+#storm.set1$search <- ifelse(storm.set1$EVTYPE == "THUNDERSTORM WINDS", "THUNDERSTORM WIND", storm.set1$EVTYPE)
+#storm.set1$event.list <- ifelse(storm.set1$EVTYPE == "THUNDERSTORM WINDS", "Thunderstorm Wind", 
+#                                ifelse(is.na(storm.set1$EVTYPE), NA, storm.set1$EVTYPE)
+#                                )
+#
+## what's the impact of this matching?
+#records.unmatched <- sum(is.na(storm.set1$event.list))
+#records.matched <- sum(!is.na(storm.set1$event.list))
+#records.ratio <- round(records.matched / records.total, 3)
+```
 
-sum(is.na(storm.set1$event.list))
-sum(!is.na(storm.set1$event.list))
+There are a total of `r records.total` records of which we have matched `r records.matched` for a total of `r records.ratio * 100`%.
+
+```{r}
+#my.tmp <- grep("MARINE TSTM WIND", storm.set1$EVTYPE)
+#storm.set1$search[my.tmp ] <- "MARINE THUNDERSTORM WIND"
+#storm.set1$event.list[my.tmp ] <- "Marine Thunderstorm Wind"
+#
+## but not grep("TSTM WIND", storm.set1$EVTYPE)
+#my.tmp <- storm.set1[(is.na(storm.set1$event.list) & storm.set1$EVTYPE == "TSTM WIND")]
+#
+#
+#sum(is.na(storm.set1$event.list))
+#sum(!is.na(storm.set1$event.list))
 ```
 
 ## Results
 
+```{r dangerous}
+# assemble the reporting data structure from the cleaned up data
+
+# first, assemble the reporting data for dangerous weather events
+by_event <- group_by(storm.set1, event.list)
+dangerous <- summarize(by_event, sum(FATALITIES), sum(INJURIES))
+setnames(dangerous, 1:3, c("Weather Event", "Deaths", "Injuries"))
+dangerous <- mutate(dangerous, Total = Deaths + Injuries) %>% mutate(rev.sort = 100000 - Total)
+setkey(dangerous, rev.sort)
+
+dangerous[1:50, ]
+#summarize(dangerous$Total)
+```
 <br />
 <hr />
+
+```{r costly}
+# assemble the reporting data for weather event costs
+
+```
 
 ## Conclusion
 

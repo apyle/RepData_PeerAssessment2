@@ -693,25 +693,128 @@ setkey(storm.subset, search)
 
 storm.set1 <- left_join(storm.subset, event.list, by = c("search" = "search"))
 
-sum(is.na(storm.set1$event.list))
+# how many are matched with good EVTYPE values?
+records.total <- count(storm.set1)
+records.unmatched <- sum(is.na(storm.set1$event.list))
+records.matched <- sum(!is.na(storm.set1$event.list))
+records.ratio <- round(records.matched / records.total, 3)
 ```
 
-```
-## [1] 81736
-```
+There are a total of 254633 records of which we have matched 172897 for a total of 67.9%.
+
 
 ```r
-sum(!is.na(storm.set1$event.list))
+#
+## most of the records were coded with the correct EVTYPE, i.e., the ones in the NOAA weather event list.
+## Now we need to clean up as many of the incorrectly coded EVTYPEs
+#storm.set1$search <- ifelse(storm.set1$EVTYPE == "THUNDERSTORM WINDS", "THUNDERSTORM WIND", storm.set1$EVTYPE)
+#storm.set1$event.list <- ifelse(storm.set1$EVTYPE == "THUNDERSTORM WINDS", "Thunderstorm Wind", 
+#                                ifelse(is.na(storm.set1$EVTYPE), NA, storm.set1$EVTYPE)
+#                                )
+#
+## what's the impact of this matching?
+#records.unmatched <- sum(is.na(storm.set1$event.list))
+#records.matched <- sum(!is.na(storm.set1$event.list))
+#records.ratio <- round(records.matched / records.total, 3)
 ```
 
-```
-## [1] 172897
+There are a total of 254633 records of which we have matched 172897 for a total of 67.9%.
+
+
+```r
+#my.tmp <- grep("MARINE TSTM WIND", storm.set1$EVTYPE)
+#storm.set1$search[my.tmp ] <- "MARINE THUNDERSTORM WIND"
+#storm.set1$event.list[my.tmp ] <- "Marine Thunderstorm Wind"
+#
+## but not grep("TSTM WIND", storm.set1$EVTYPE)
+#my.tmp <- storm.set1[(is.na(storm.set1$event.list) & storm.set1$EVTYPE == "TSTM WIND")]
+#
+#
+#sum(is.na(storm.set1$event.list))
+#sum(!is.na(storm.set1$event.list))
 ```
 
 ## Results
 
+
+```r
+# assemble the reporting data structure from the cleaned up data
+
+# first, assemble the reporting data for dangerous weather events
+by_event <- group_by(storm.set1, event.list)
+dangerous <- summarize(by_event, sum(FATALITIES), sum(INJURIES))
+setnames(dangerous, 1:3, c("Weather Event", "Deaths", "Injuries"))
+dangerous <- mutate(dangerous, Total = Deaths + Injuries) %>% mutate(rev.sort = 100000 - Total)
+setkey(dangerous, rev.sort)
+
+dangerous[1:50, ]
+```
+
+```
+##                Weather Event Deaths Injuries Total rev.sort
+##  1:                  Tornado   5633    91346 96979     3021
+##  2:                       NA   2034    12563 14597    85403
+##  3:           Excessive Heat   1903     6525  8428    91572
+##  4:                    Flood    470     6789  7259    92741
+##  5:                Lightning    816     5230  6046    93954
+##  6:                     Heat    937     2100  3037    96963
+##  7:              Flash Flood    978     1777  2755    97245
+##  8:                Ice Storm     89     1975  2064    97936
+##  9:        Thunderstorm Wind    133     1488  1621    98379
+## 10:             Winter Storm    206     1321  1527    98473
+## 11:                High Wind    248     1137  1385    98615
+## 12:                     Hail     15     1361  1376    98624
+## 13:        Hurricane/Typhoon     64     1275  1339    98661
+## 14:               Heavy Snow    127     1021  1148    98852
+## 15:                 Wildfire     75      911   986    99014
+## 16:                 Blizzard    101      805   906    99094
+## 17:              Rip Current    368      232   600    99400
+## 18:               Dust Storm     22      440   462    99538
+## 19:           Winter Weather     33      398   431    99569
+## 20:           Tropical Storm     58      340   398    99602
+## 21:                Avalanche    224      170   394    99606
+## 22:              Strong Wind    103      280   383    99617
+## 23:                Dense Fog     18      342   360    99640
+## 24:               Heavy Rain     98      251   349    99651
+## 25:                High Surf    104      156   260    99740
+## 26:                  Tsunami     33      129   162    99838
+## 27:  Extreme Cold/Wind Chill    125       24   149    99851
+## 28:          Cold/Wind Chill     95       12   107    99893
+## 29:               Dust Devil      2       43    45    99955
+## 30:       Marine Strong Wind     14       22    36    99964
+## 31: Marine Thunderstorm Wind     10       26    36    99964
+## 32:               Waterspout      3       29    32    99968
+## 33:            Coastal Flood      3        2     5    99995
+## 34:                  Drought      0        4     4    99996
+## 35:             Funnel Cloud      0        3     3    99997
+## 36:         Marine High Wind      1        1     2    99998
+## 37:                    Sleet      2        0     2    99998
+## 38:    Astronomical Low Tide      0        0     0   100000
+## 39:              Dense Smoke      0        0     0   100000
+## 40:             Freezing Fog      0        0     0   100000
+## 41:             Frost/Freeze      0        0     0   100000
+## 42:         Lake-Effect Snow      0        0     0   100000
+## 43:          Lakeshore Flood      0        0     0   100000
+## 44:              Marine Hail      0        0     0   100000
+## 45:                   Seiche      0        0     0   100000
+## 46:      Tropical Depression      0        0     0   100000
+## 47:             Volcanic Ash      0        0     0   100000
+## 48:                       NA     NA       NA    NA       NA
+## 49:                       NA     NA       NA    NA       NA
+## 50:                       NA     NA       NA    NA       NA
+##                Weather Event Deaths Injuries Total rev.sort
+```
+
+```r
+#summarize(dangerous$Total)
+```
 <br />
 <hr />
+
+
+```r
+# assemble the reporting data for weather event costs
+```
 
 ## Conclusion
 
