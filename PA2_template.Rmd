@@ -59,6 +59,9 @@ suppressWarnings(library(data.table))
 # use dplyr for data manipulation
 suppressWarnings(library(dplyr))
 
+# we'll use the ggplot2 system to create and save the plots 
+suppressWarnings(library(ggplot2))
+
 # set knitr default option values, specifically echo, turning on the cache and
 # setting its location, and specifying the figure directory
 opts_chunk$set(echo = TRUE, 
@@ -296,7 +299,6 @@ storm.set1 <- storm.set1 %>%
 Answer these two questions:
 
 1. Across the United States, which types of events (as indicated in the `EVTYPE` variable) are most harmful with respect to population health?
-1. Across the United States, which types of events have the greatest economic consequences?
 
 
 ```{r dangerous, cache=FALSE}
@@ -305,37 +307,75 @@ Answer these two questions:
 # first, assemble the reporting data for dangerous weather events
 by_event <- group_by(storm.set1, event.list)
 dangerous <- summarize(by_event, sum(FATALITIES), sum(INJURIES))
-setnames(dangerous, 1:3, c("Weather Event", "Deaths", "Injuries"))
+setnames(dangerous, 1:3, c("WeatherEvent", "Deaths", "Injuries"))
 dangerous <- dangerous %>% 
-        #na.omit() %>% 
+        na.omit() %>% 
         mutate(Total = Deaths + Injuries) %>% 
-        mutate(rev.sort = 100000 - Total)
+        mutate(rev.sort = 100000 - Total) %>%
+        mutate(WeatherEvent = as.factor(WeatherEvent))
 
 setkey(dangerous, rev.sort)
 
-dangerous[1:47, ]
-#summarize(dangerous$Total)
+g <- ggplot(dangerous, aes(x = WeatherEvent, y = Total)) +
+        geom_point() +
+        xlab("Weather Event") +
+        ylab("Total Injuries and Fatalities") +
+        ggtitle("The Most Dangerous Weather Events in the United States")
+
+dev.set(2)
+png(file="figure/dangerous.png", width=1672)
+print(g)
+dev.off()
+
+dangerous[1:5, ]
 ```
+
+As can be seen from the above table and the chart below, Tornados are by far the 
+most dangerous weather event in the United States. It is an order of magnitude more 
+dangerous than the second most dangerous event, Thunderstorm Wind.
+
+
+![](figure/dangerous.png)
+
 <br />
 <hr />
+
+2. Across the United States, which types of events have the greatest economic consequences?
 
 ```{r costly, cache=FALSE}
 # assemble the reporting data for weather event costs
 by_event <- group_by(storm.set1, event.list)
 costs <- summarize(by_event, sum(prop.total), sum(crop.total))
-setnames(costs, 1:3, c("Weather Event", "Property", "Crop"))
+setnames(costs, 1:3, c("WeatherEvent", "Property", "Crop"))
 costs <- costs %>% 
-        #na.omit() %>% 
+        na.omit() %>% 
         mutate(Total = Property + Crop) %>% 
         mutate(rev.sort = 100000000 - Total)
 
 
 setkey(costs, rev.sort)
 
-#na.omit(costs[1:47, ])
-costs[1:50, ]
+g <- ggplot(costs, aes(x = WeatherEvent, y = Total)) +
+        geom_point() +
+        xlab("Weather Event") +
+        ylab("Total Costs in Dollars") +
+        ggtitle("The Most Expensive Weather Events in the United States")
+
+dev.set(2)
+png(file="figure/cost.png", width=1672)
+print(g)
+dev.off()
+
+costs[1:5, ]
+
 ```
 
-## Conclusion
+As can be seen from the above table and the chart below, Floods are the most 
+expensive weather event in the United States. However, Hurricanes, Tornadoes, and 
+Storm Tide have also caused tens of billions of dollars in damages during the 
+research period. Flooding is also the only weather event that causes more than ten 
+billion dollars in damages for both property and agriculture.
+
+![](figure/cost.png)
 
 [1]: https://github.com/apyle/RepData_PeerAssessment2

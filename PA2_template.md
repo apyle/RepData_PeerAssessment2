@@ -74,6 +74,9 @@ suppressWarnings(library(dplyr))
 ```
 
 ```r
+# we'll use the ggplot2 system to create and save the plots 
+suppressWarnings(library(ggplot2))
+
 # set knitr default option values, specifically echo, turning on the cache and
 # setting its location, and specifying the figure directory
 opts_chunk$set(echo = TRUE, 
@@ -309,7 +312,6 @@ storm.set1 <- storm.set1 %>%
 Answer these two questions:
 
 1. Across the United States, which types of events (as indicated in the `EVTYPE` variable) are most harmful with respect to population health?
-1. Across the United States, which types of events have the greatest economic consequences?
 
 
 
@@ -319,200 +321,123 @@ Answer these two questions:
 # first, assemble the reporting data for dangerous weather events
 by_event <- group_by(storm.set1, event.list)
 dangerous <- summarize(by_event, sum(FATALITIES), sum(INJURIES))
-setnames(dangerous, 1:3, c("Weather Event", "Deaths", "Injuries"))
+setnames(dangerous, 1:3, c("WeatherEvent", "Deaths", "Injuries"))
 dangerous <- dangerous %>% 
-        #na.omit() %>% 
+        na.omit() %>% 
         mutate(Total = Deaths + Injuries) %>% 
-        mutate(rev.sort = 100000 - Total)
+        mutate(rev.sort = 100000 - Total) %>%
+        mutate(WeatherEvent = as.factor(WeatherEvent))
 
 setkey(dangerous, rev.sort)
 
-dangerous[1:47, ]
+g <- ggplot(dangerous, aes(x = WeatherEvent, y = Total)) +
+        geom_point() +
+        xlab("Weather Event") +
+        ylab("Total Injuries and Fatalities") +
+        ggtitle("The Most Dangerous Weather Events in the United States")
+
+dev.set(2)
 ```
 
 ```
-##                Weather Event Deaths Injuries Total rev.sort
-##  1:                  Tornado   5658    91364 97022     2978
-##  2:        Thunderstorm Wind    709     9459 10168    89832
-##  3:           Excessive Heat   2180     7074  9254    90746
-##  4:                    Flood    530     6894  7424    92576
-##  5:                Lightning    816     5230  6046    93954
-##  6:                       NA    532     2865  3397    96603
-##  7:                     Heat    937     2100  3037    96963
-##  8:              Flash Flood   1018     1785  2803    97197
-##  9:                Ice Storm     89     1975  2064    97936
-## 10:                High Wind    289     1500  1789    98211
-## 11:             Winter Storm    206     1321  1527    98473
-## 12:        Hurricane/Typhoon    135     1333  1468    98532
-## 13:                     Hail     15     1361  1376    98624
-## 14:               Heavy Snow    127     1021  1148    98852
-## 15:              Rip Current    577      529  1106    98894
-## 16:                 Wildfire     75      911   986    99014
-## 17:                 Blizzard    101      805   906    99094
-## 18:                Dense Fog    116      597   713    99287
-## 19:  Extreme Cold/Wind Chill    287      255   542    99458
-## 20:               Dust Storm     22      440   462    99538
-## 21:           Tropical Storm     66      383   449    99551
-## 22:           Winter Weather     33      398   431    99569
-## 23:                Avalanche    224      170   394    99606
-## 24:              Strong Wind    103      280   383    99617
-## 25:                High Surf    104      156   260    99740
-## 26:                  Tsunami     33      129   162    99838
-## 27:          Cold/Wind Chill     95       12   107    99893
-## 28:               Storm Tide     24       43    67    99933
-## 29: Marine Thunderstorm Wind     19       34    53    99947
-## 30:               Dust Devil      2       43    45    99955
-## 31:       Marine Strong Wind     14       22    36    99964
-## 32:               Waterspout      3       29    32    99968
-## 33:            Coastal Flood      3        2     5    99995
-## 34:                  Drought      0        4     4    99996
-## 35:             Funnel Cloud      0        3     3    99997
-## 36:         Marine High Wind      1        1     2    99998
-## 37:                    Sleet      2        0     2    99998
-## 38:    Astronomical Low Tide      0        0     0   100000
-## 39:              Dense Smoke      0        0     0   100000
-## 40:             Freezing Fog      0        0     0   100000
-## 41:             Frost/Freeze      0        0     0   100000
-## 42:         Lake-Effect Snow      0        0     0   100000
-## 43:          Lakeshore Flood      0        0     0   100000
-## 44:              Marine Hail      0        0     0   100000
-## 45:                   Seiche      0        0     0   100000
-## 46:      Tropical Depression      0        0     0   100000
-## 47:             Volcanic Ash      0        0     0   100000
-##                Weather Event Deaths Injuries Total rev.sort
+## pdf 
+##   2
 ```
 
 ```r
-#summarize(dangerous$Total)
+png(file="figure/dangerous.png", width=1672)
+print(g)
+dev.off()
 ```
+
+```
+## pdf 
+##   2
+```
+
+```r
+dangerous[1:5, ]
+```
+
+```
+##         WeatherEvent Deaths Injuries Total rev.sort
+## 1:           Tornado   5658    91364 97022     2978
+## 2: Thunderstorm Wind    709     9459 10168    89832
+## 3:    Excessive Heat   2180     7074  9254    90746
+## 4:             Flood    530     6894  7424    92576
+## 5:         Lightning    816     5230  6046    93954
+```
+
+As can be seen from the above table and the chart below, Tornados are by far the 
+most dangerous weather event in the United States. It is an order of magnitude more 
+dangerous than the second most dangerous event, Thunderstorm Wind.
+
+
+![](figure/dangerous.png)
+
 <br />
 <hr />
+
+2. Across the United States, which types of events have the greatest economic consequences?
 
 
 ```r
 # assemble the reporting data for weather event costs
 by_event <- group_by(storm.set1, event.list)
 costs <- summarize(by_event, sum(prop.total), sum(crop.total))
-setnames(costs, 1:3, c("Weather Event", "Property", "Crop"))
+setnames(costs, 1:3, c("WeatherEvent", "Property", "Crop"))
 costs <- costs %>% 
-        #na.omit() %>% 
+        na.omit() %>% 
         mutate(Total = Property + Crop) %>% 
         mutate(rev.sort = 100000000 - Total)
 
 
 setkey(costs, rev.sort)
 
-#na.omit(costs[1:47, ])
-costs[1:50, ]
+g <- ggplot(costs, aes(x = WeatherEvent, y = Total)) +
+        geom_point() +
+        xlab("Weather Event") +
+        ylab("Total Costs in Dollars") +
+        ggtitle("The Most Expensive Weather Events in the United States")
+
+dev.set(2)
 ```
 
 ```
-##                Weather Event     Property        Crop        Total
-##  1:                    Flood 150442587594 10951026050 161393613644
-##  2:        Hurricane/Typhoon  85336410030  5506117810  90842527840
-##  3:                  Tornado  58530431990   417461470  58947893460
-##  4:               Storm Tide  47964724000      855000  47965579000
-##  5:                     Hail  15969569553  3025678040  18995247593
-##  6:              Flash Flood  16732819178  1437153160  18169972338
-##  7:                  Drought   1046106000 13972566000  15018672000
-##  8:        Thunderstorm Wind   9750415531  1224394992  10974810523
-##  9:                Ice Storm   3944927860  5022113500   8967041360
-## 10:           Tropical Storm   7714390550   694896000   8409286550
-## 11:                       NA   5689751450  1377301915   7067053365
-## 12:                High Wind   6063225043   691821900   6755046943
-## 13:             Winter Storm   6688497251    26944000   6715441251
-## 14:                 Wildfire   4765114000   295472800   5060586800
-## 15:                Dense Fog   3240672140   795752800   4036424940
-## 16:  Extreme Cold/Wind Chill     76385400  1313023000   1389408400
-## 17:             Frost/Freeze     10480000  1094186000   1104666000
-## 18:               Heavy Snow    932589142   134653100   1067242242
-## 19:                Lightning    928659447    12092090    940751537
-## 20:                 Blizzard    659213950   112060000    771273950
-## 21:           Excessive Heat     18528750   503002000    521530750
-## 22:                     Heat      1797000   401461500    403258500
-## 23:            Coastal Flood    259570560           0    259570560
-## 24:              Strong Wind    175259450    64953500    240212950
-## 25:                  Tsunami    144062000       20000    144082000
-## 26:                High Surf     89955000           0     89955000
-## 27:         Lake-Effect Snow     40115000           0     40115000
-## 28:           Winter Weather     20866000    15000000     35866000
-## 29:               Waterspout      9353700           0      9353700
-## 30:               Dust Storm      5549000     3100000      8649000
-## 31:          Lakeshore Flood      7540000           0      7540000
-## 32: Marine Thunderstorm Wind      5857400       50000      5907400
-## 33:                Avalanche      3721800           0      3721800
-## 34:          Cold/Wind Chill      1990000      600000      2590000
-## 35:             Freezing Fog      2182000           0      2182000
-## 36:      Tropical Depression      1737000           0      1737000
-## 37:         Marine High Wind      1297010           0      1297010
-## 38:                   Seiche       980000           0       980000
-## 39:               Dust Devil       718630           0       718630
-## 40:             Volcanic Ash       500000           0       500000
-## 41:       Marine Strong Wind       418330           0       418330
-## 42:    Astronomical Low Tide       320000           0       320000
-## 43:             Funnel Cloud       194600           0       194600
-## 44:              Rip Current       163000           0       163000
-## 45:              Dense Smoke       100000           0       100000
-## 46:              Marine Hail         4000           0         4000
-## 47:                    Sleet            0           0            0
-## 48:                       NA           NA          NA           NA
-## 49:                       NA           NA          NA           NA
-## 50:                       NA           NA          NA           NA
-##                Weather Event     Property        Crop        Total
-##          rev.sort
-##  1: -161293613644
-##  2:  -90742527840
-##  3:  -58847893460
-##  4:  -47865579000
-##  5:  -18895247593
-##  6:  -18069972338
-##  7:  -14918672000
-##  8:  -10874810523
-##  9:   -8867041360
-## 10:   -8309286550
-## 11:   -6967053365
-## 12:   -6655046943
-## 13:   -6615441251
-## 14:   -4960586800
-## 15:   -3936424940
-## 16:   -1289408400
-## 17:   -1004666000
-## 18:    -967242242
-## 19:    -840751537
-## 20:    -671273950
-## 21:    -421530750
-## 22:    -303258500
-## 23:    -159570560
-## 24:    -140212950
-## 25:     -44082000
-## 26:      10045000
-## 27:      59885000
-## 28:      64134000
-## 29:      90646300
-## 30:      91351000
-## 31:      92460000
-## 32:      94092600
-## 33:      96278200
-## 34:      97410000
-## 35:      97818000
-## 36:      98263000
-## 37:      98702990
-## 38:      99020000
-## 39:      99281370
-## 40:      99500000
-## 41:      99581670
-## 42:      99680000
-## 43:      99805400
-## 44:      99837000
-## 45:      99900000
-## 46:      99996000
-## 47:     100000000
-## 48:            NA
-## 49:            NA
-## 50:            NA
-##          rev.sort
+## pdf 
+##   2
 ```
 
-## Conclusion
+```r
+png(file="figure/cost.png", width=1672)
+print(g)
+dev.off()
+```
+
+```
+## pdf 
+##   2
+```
+
+```r
+costs[1:5, ]
+```
+
+```
+##         WeatherEvent     Property        Crop        Total      rev.sort
+## 1:             Flood 150442587594 10951026050 161393613644 -161293613644
+## 2: Hurricane/Typhoon  85336410030  5506117810  90842527840  -90742527840
+## 3:           Tornado  58530431990   417461470  58947893460  -58847893460
+## 4:        Storm Tide  47964724000      855000  47965579000  -47865579000
+## 5:              Hail  15969569553  3025678040  18995247593  -18895247593
+```
+
+As can be seen from the above table and the chart below, Floods are the most 
+expensive weather event in the United States. However, Hurricanes, Tornadoes, and 
+Storm Tide have also caused tens of billions of dollars in damages during the 
+research period. Flooding is also the only weather event that causes more than ten 
+billion dollars in damages for both property and agriculture.
+
+![](figure/cost.png)
 
 [1]: https://github.com/apyle/RepData_PeerAssessment2
