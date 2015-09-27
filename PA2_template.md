@@ -693,6 +693,7 @@ setkey(event.list, search)
 storm.subset <- mutate(storm.subset, search = toupper(EVTYPE))
 setkey(storm.subset, search)
 
+# Match the input data with the NOAA list
 storm.set1 <- left_join(storm.subset, event.list, by = c("search" = "search"))
 
 # how many are matched with good EVTYPE values?
@@ -700,26 +701,23 @@ records.total <- count(storm.set1)
 records.unmatched <- sum(is.na(storm.set1$event.list))
 records.matched <- sum(!is.na(storm.set1$event.list))
 records.ratio <- round(records.matched / records.total, 3)
-
-# Now create fields for actual property and crop costs
-storm.set1 <- mutate(storm.set1, prop.total = PROPDMG, crop.total = CROPDMG)
-
-# adjust property damage costs based on the PROPGMGEXP
-storm.set1 <- storm.set1 %>%
-        mutate(prop.total = ifelse(PROPDMGEXP == "K", prop.total * 1000, prop.total)) %>%
-        mutate(prop.total = ifelse(PROPDMGEXP == "M", prop.total * 1000000, prop.total)) %>%
-        mutate(prop.total = ifelse(PROPDMGEXP == "B", prop.total * 1000000000, prop.total))
-
-# and do the same for crop damage costs
-storm.set1 <- storm.set1 %>%
-        mutate(crop.total = ifelse(CROPDMGEXP == "K", crop.total * 1000, crop.total)) %>%
-        mutate(crop.total = ifelse(CROPDMGEXP == "M", crop.total * 1000000, crop.total)) %>%
-        mutate(crop.total = ifelse(CROPDMGEXP == "B", crop.total * 1000000000, crop.total))
 ```
 
-There are a total of 254633 records. Of these records, there are 172897 which correctly coded as NOAA's recognized weather events. This is a ratio of 67.9% good records. The remaining unmatched records represent a significant number of fatalities, injuries, and damage that could change the results of the most dangerous and expensive weather events. In order to keep this miscoding from under-reporting the results, we'll clean up as much of the data as we can.
+There are a total of 254633 records. Of these records, there are 172897 
+which correctly coded as NOAA's recognized weather events. This is a ratio of 67.9% 
+that were well coded. The remaining unmatched records represent a significant number of fatalities, 
+injuries, and damage that could change the results of the most dangerous and expensive weather events. 
+In order to keep this miscoding from under-reporting the results, we'll clean up as much of the data 
+as we can.
 
-Some of the data records include multiple weather events such as Thunderstorm Wind and Lightning or Heavy Snow and High Wind. In these cases we will categorize the record under the first weather event. In these two examples, the data record would be recorded as Thunderstorm Wind and Heavy Snow respectively and the data would not appear as Lightning or Heavy Snow. This will prevent fatalities, injuries, and damages from appearing multiple times which would skew the total. The second, or third, events listed will be under reported in these cases. Another approach would be to divide the damages evenly between the weather events. However, this proves to be very time consuming for a marginal refinement of the results.
+Some of the data records include multiple weather events such as Thunderstorm Wind and Lightning or 
+Heavy Snow and High Wind. In these cases we will categorize the record under the first weather event. 
+In these two examples, the data record would be recorded as Thunderstorm Wind and Heavy Snow 
+respectively and the data would not appear as Lightning or Heavy Snow. This will prevent fatalities, 
+injuries, and damages from appearing multiple times which would skew the total. The second, or third, 
+events listed will be under reported in these cases. Another approach would be to divide the damages 
+evenly between the weather events. However, this proves to be very time consuming for a marginal 
+refinement of the results.
 
 
 ```r
@@ -758,16 +756,22 @@ After cleaning up the data there are still a total of 254633 records of which we
 
 
 ```r
-#my.tmp <- grep("MARINE TSTM WIND", storm.set1$EVTYPE)
-#storm.set1$search[my.tmp ] <- "MARINE THUNDERSTORM WIND"
-#storm.set1$event.list[my.tmp ] <- "Marine Thunderstorm Wind"
-#
-## but not grep("TSTM WIND", storm.set1$EVTYPE)
-#my.tmp <- storm.set1[(is.na(storm.set1$event.list) & storm.set1$EVTYPE == "TSTM WIND")]
-#
-#
-#sum(is.na(storm.set1$event.list))
-#sum(!is.na(storm.set1$event.list))
+# the input data records property and crop damages in two fields, one for a numerical amount 
+# and another for the magnitude of damages. We'll need to get the actual number for our analysis
+
+# adjust property damage costs based on the PROPGMGEXP
+storm.set1 <- storm.set1 %>%
+        mutate(prop.total = PROPDMG) %>%
+        mutate(prop.total = ifelse(PROPDMGEXP == "K", prop.total * 1000, prop.total)) %>%
+        mutate(prop.total = ifelse(PROPDMGEXP == "M", prop.total * 1000000, prop.total)) %>%
+        mutate(prop.total = ifelse(PROPDMGEXP == "B", prop.total * 1000000000, prop.total))
+
+# and do the same for crop damage costs
+storm.set1 <- storm.set1 %>%
+        mutate(crop.total = CROPDMG) %>%
+        mutate(crop.total = ifelse(CROPDMGEXP == "K", crop.total * 1000, crop.total)) %>%
+        mutate(crop.total = ifelse(CROPDMGEXP == "M", crop.total * 1000000, crop.total)) %>%
+        mutate(crop.total = ifelse(CROPDMGEXP == "B", crop.total * 1000000000, crop.total))
 ```
 
 ## Results
