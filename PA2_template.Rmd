@@ -118,15 +118,17 @@ records.ratio <- round(records.matched / records.total, 3)
 # Now create fields for actual property and crop costs
 storm.set1 <- mutate(storm.set1, prop.total = PROPDMG, crop.total = CROPDMG)
 
-# property rows we need to adjust 
-propK <- storm.set1$PROPDMGEXP == "K"
-propM <- storm.set1$PROPDMGEXP == "M"
-propB <- storm.set1$PROPDMGEXP == "B"
+# adjust property damage costs based on the PROPGMGEXP
+storm.set1 <- storm.set1 %>%
+        mutate(prop.total = ifelse(PROPDMGEXP == "K", prop.total * 1000, prop.total)) %>%
+        mutate(prop.total = ifelse(PROPDMGEXP == "M", prop.total * 1000000, prop.total)) %>%
+        mutate(prop.total = ifelse(PROPDMGEXP == "B", prop.total * 1000000000, prop.total))
 
-# crop rows we need to adjust
-cropK <- storm.set1$CROPDMGEXP == "K"
-cropM <- storm.set1$CROPDMGEXP == "M"
-cropB <- storm.set1$CROPDMGEXP == "B"
+# and do the same for crop damage costs
+storm.set1 <- storm.set1 %>%
+        mutate(crop.total = ifelse(CROPDMGEXP == "K", crop.total * 1000, crop.total)) %>%
+        mutate(crop.total = ifelse(CROPDMGEXP == "M", crop.total * 1000000, crop.total)) %>%
+        mutate(crop.total = ifelse(CROPDMGEXP == "B", crop.total * 1000000000, crop.total))
 
 
 ```
@@ -172,10 +174,14 @@ There are a total of `r records.total` records of which we have matched `r recor
 by_event <- group_by(storm.set1, event.list)
 dangerous <- summarize(by_event, sum(FATALITIES), sum(INJURIES))
 setnames(dangerous, 1:3, c("Weather Event", "Deaths", "Injuries"))
-dangerous <- mutate(dangerous, Total = Deaths + Injuries) %>% mutate(rev.sort = 100000 - Total)
+dangerous <- dangerous %>% 
+        na.omit() %>%
+        mutate(Total = Deaths + Injuries) %>% 
+        mutate(rev.sort = 100000 - Total)
+
 setkey(dangerous, rev.sort)
 
-dangerous[1:50, ]
+dangerous[1:47, ]
 #summarize(dangerous$Total)
 ```
 <br />
@@ -183,7 +189,19 @@ dangerous[1:50, ]
 
 ```{r costly}
 # assemble the reporting data for weather event costs
+by_event <- group_by(storm.set1, event.list)
+costs <- summarize(by_event, sum(prop.total), sum(crop.total))
+setnames(costs, 1:3, c("Weather Event", "Property", "Crop"))
+costs <- costs %>% 
+        #na.omit() %>%
+        mutate(Total = Property + Crop) %>% 
+        mutate(rev.sort = 100000000 - Total)
 
+
+setkey(costs, rev.sort)
+
+#na.omit(costs[1:47, ])
+costs[1:50, ]
 ```
 
 ## Conclusion
