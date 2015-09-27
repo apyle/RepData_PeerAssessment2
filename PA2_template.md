@@ -18,6 +18,8 @@ Answer these two questions:
 ## Data
 
 Actual dollars, not adjusted for inflation
+
+Assumes no duplicate records
 <br />
 <hr />
 
@@ -715,7 +717,9 @@ storm.set1 <- storm.set1 %>%
         mutate(crop.total = ifelse(CROPDMGEXP == "B", crop.total * 1000000000, crop.total))
 ```
 
-There are a total of 254633 records of which we have matched 172897 for a total of 67.9%.
+There are a total of 254633 records. Of these records, there are 172897 which correctly coded as NOAA's recognized weather events. This is a ratio of 67.9% good records. The remaining unmatched records represent a significant number of fatalities, injuries, and damage that could change the results of the most dangerous and expensive weather events. In order to keep this miscoding from under-reporting the results, we'll clean up as much of the data as we can.
+
+Some of the data records include multiple weather events such as Thunderstorm Wind and Lightning or Heavy Snow and High Wind. In these cases we will categorize the record under the first weather event. In these two examples, the data record would be recorded as Thunderstorm Wind and Heavy Snow respectively and the data would not appear as Lightning or Heavy Snow. This will prevent fatalities, injuries, and damages from appearing multiple times which would skew the total. The second, or third, events listed will be under reported in these cases. Another approach would be to divide the damages evenly between the weather events. However, this proves to be very time consuming for a marginal refinement of the results.
 
 
 ```r
@@ -731,9 +735,26 @@ There are a total of 254633 records of which we have matched 172897 for a total 
 #records.unmatched <- sum(is.na(storm.set1$event.list))
 #records.matched <- sum(!is.na(storm.set1$event.list))
 #records.ratio <- round(records.matched / records.total, 3)
+
+# there are a large number of Thunderstorm Winds that are not coded correctly. 
+is.marine <- grep("MARINE TSTM", storm.set1$search)
+storm.set1$event.list[is.marine] <- c("Marine Thunderstorm Wind")
+
+# Hurricanes & Typhons are very damaging. Make sure we include these rare but important events in the results
+# These grep statements will include the entries already matched but does not cause a problem
+is.ht <- grep("HURRICANE", storm.set1$search)
+storm.set1$event.list[is.ht] <- c("Hurricane/Typhoon")
+is.ht <- grep("TYPHOON", storm.set1$search)
+storm.set1$event.list[is.ht] <- c("Hurricane/Typhoon")
+
+# after our clean-up how many are matched with good EVTYPE values?
+records.total <- count(storm.set1)
+records.unmatched <- sum(is.na(storm.set1$event.list))
+records.matched <- sum(!is.na(storm.set1$event.list))
+records.ratio <- round(records.matched / records.total, 3)
 ```
 
-There are a total of 254633 records of which we have matched 172897 for a total of 67.9%.
+After cleaning up the data there are still a total of 254633 records of which we now have matched 173167 for a total of 68%.
 
 
 ```r
@@ -760,7 +781,7 @@ by_event <- group_by(storm.set1, event.list)
 dangerous <- summarize(by_event, sum(FATALITIES), sum(INJURIES))
 setnames(dangerous, 1:3, c("Weather Event", "Deaths", "Injuries"))
 dangerous <- dangerous %>% 
-        na.omit() %>%
+        #na.omit() %>% 
         mutate(Total = Deaths + Injuries) %>% 
         mutate(rev.sort = 100000 - Total)
 
@@ -772,52 +793,52 @@ dangerous[1:47, ]
 ```
 ##                Weather Event Deaths Injuries Total rev.sort
 ##  1:                  Tornado   5633    91346 96979     3021
-##  2:           Excessive Heat   1903     6525  8428    91572
-##  3:                    Flood    470     6789  7259    92741
-##  4:                Lightning    816     5230  6046    93954
-##  5:                     Heat    937     2100  3037    96963
-##  6:              Flash Flood    978     1777  2755    97245
-##  7:                Ice Storm     89     1975  2064    97936
-##  8:        Thunderstorm Wind    133     1488  1621    98379
-##  9:             Winter Storm    206     1321  1527    98473
-## 10:                High Wind    248     1137  1385    98615
-## 11:                     Hail     15     1361  1376    98624
-## 12:        Hurricane/Typhoon     64     1275  1339    98661
-## 13:               Heavy Snow    127     1021  1148    98852
-## 14:                 Wildfire     75      911   986    99014
-## 15:                 Blizzard    101      805   906    99094
-## 16:              Rip Current    368      232   600    99400
-## 17:               Dust Storm     22      440   462    99538
-## 18:           Winter Weather     33      398   431    99569
-## 19:           Tropical Storm     58      340   398    99602
-## 20:                Avalanche    224      170   394    99606
-## 21:              Strong Wind    103      280   383    99617
-## 22:                Dense Fog     18      342   360    99640
-## 23:               Heavy Rain     98      251   349    99651
-## 24:                High Surf    104      156   260    99740
-## 25:                  Tsunami     33      129   162    99838
-## 26:  Extreme Cold/Wind Chill    125       24   149    99851
-## 27:          Cold/Wind Chill     95       12   107    99893
-## 28:               Dust Devil      2       43    45    99955
-## 29:       Marine Strong Wind     14       22    36    99964
-## 30: Marine Thunderstorm Wind     10       26    36    99964
-## 31:               Waterspout      3       29    32    99968
-## 32:            Coastal Flood      3        2     5    99995
-## 33:                  Drought      0        4     4    99996
-## 34:             Funnel Cloud      0        3     3    99997
-## 35:         Marine High Wind      1        1     2    99998
-## 36:                    Sleet      2        0     2    99998
-## 37:    Astronomical Low Tide      0        0     0   100000
-## 38:              Dense Smoke      0        0     0   100000
-## 39:             Freezing Fog      0        0     0   100000
-## 40:             Frost/Freeze      0        0     0   100000
-## 41:         Lake-Effect Snow      0        0     0   100000
-## 42:          Lakeshore Flood      0        0     0   100000
-## 43:              Marine Hail      0        0     0   100000
-## 44:                   Seiche      0        0     0   100000
-## 45:      Tropical Depression      0        0     0   100000
-## 46:             Volcanic Ash      0        0     0   100000
-## 47:                       NA     NA       NA    NA       NA
+##  2:                       NA   1954    12497 14451    85549
+##  3:           Excessive Heat   1903     6525  8428    91572
+##  4:                    Flood    470     6789  7259    92741
+##  5:                Lightning    816     5230  6046    93954
+##  6:                     Heat    937     2100  3037    96963
+##  7:              Flash Flood    978     1777  2755    97245
+##  8:                Ice Storm     89     1975  2064    97936
+##  9:        Thunderstorm Wind    133     1488  1621    98379
+## 10:             Winter Storm    206     1321  1527    98473
+## 11:        Hurricane/Typhoon    135     1333  1468    98532
+## 12:                High Wind    248     1137  1385    98615
+## 13:                     Hail     15     1361  1376    98624
+## 14:               Heavy Snow    127     1021  1148    98852
+## 15:                 Wildfire     75      911   986    99014
+## 16:                 Blizzard    101      805   906    99094
+## 17:              Rip Current    368      232   600    99400
+## 18:               Dust Storm     22      440   462    99538
+## 19:           Winter Weather     33      398   431    99569
+## 20:           Tropical Storm     58      340   398    99602
+## 21:                Avalanche    224      170   394    99606
+## 22:              Strong Wind    103      280   383    99617
+## 23:                Dense Fog     18      342   360    99640
+## 24:               Heavy Rain     98      251   349    99651
+## 25:                High Surf    104      156   260    99740
+## 26:                  Tsunami     33      129   162    99838
+## 27:  Extreme Cold/Wind Chill    125       24   149    99851
+## 28:          Cold/Wind Chill     95       12   107    99893
+## 29: Marine Thunderstorm Wind     19       34    53    99947
+## 30:               Dust Devil      2       43    45    99955
+## 31:       Marine Strong Wind     14       22    36    99964
+## 32:               Waterspout      3       29    32    99968
+## 33:            Coastal Flood      3        2     5    99995
+## 34:                  Drought      0        4     4    99996
+## 35:             Funnel Cloud      0        3     3    99997
+## 36:         Marine High Wind      1        1     2    99998
+## 37:                    Sleet      2        0     2    99998
+## 38:    Astronomical Low Tide      0        0     0   100000
+## 39:              Dense Smoke      0        0     0   100000
+## 40:             Freezing Fog      0        0     0   100000
+## 41:             Frost/Freeze      0        0     0   100000
+## 42:         Lake-Effect Snow      0        0     0   100000
+## 43:          Lakeshore Flood      0        0     0   100000
+## 44:              Marine Hail      0        0     0   100000
+## 45:                   Seiche      0        0     0   100000
+## 46:      Tropical Depression      0        0     0   100000
+## 47:             Volcanic Ash      0        0     0   100000
 ##                Weather Event Deaths Injuries Total rev.sort
 ```
 
@@ -834,7 +855,7 @@ by_event <- group_by(storm.set1, event.list)
 costs <- summarize(by_event, sum(prop.total), sum(crop.total))
 setnames(costs, 1:3, c("Weather Event", "Property", "Crop"))
 costs <- costs %>% 
-        #na.omit() %>%
+        #na.omit() %>% 
         mutate(Total = Property + Crop) %>% 
         mutate(rev.sort = 100000000 - Total)
 
@@ -848,8 +869,8 @@ costs[1:50, ]
 ```
 ##                Weather Event     Property        Crop        Total
 ##  1:                    Flood 144657709807  5661968450 150319678257
-##  2:                       NA  87600722572 11849222477  99449945049
-##  3:        Hurricane/Typhoon  69305840000  2607872800  71913712800
+##  2:        Hurricane/Typhoon  85336410030  5506117810  90842527840
+##  3:                       NA  71564731542  8950977467  80515709009
 ##  4:                  Tornado  56925660790   414953270  57340614060
 ##  5:                     Hail  15727367053  3025537890  18752904943
 ##  6:              Flash Flood  16140812067  1421317100  17562129167
@@ -878,15 +899,15 @@ costs[1:50, ]
 ## 29:  Extreme Cold/Wind Chill      8648000       50000      8698000
 ## 30:               Dust Storm      5549000     3100000      8649000
 ## 31:          Lakeshore Flood      7540000           0      7540000
-## 32:                Avalanche      3721800           0      3721800
-## 33:          Cold/Wind Chill      1990000      600000      2590000
-## 34:             Freezing Fog      2182000           0      2182000
-## 35:      Tropical Depression      1737000           0      1737000
-## 36:         Marine High Wind      1297010           0      1297010
-## 37:                   Seiche       980000           0       980000
-## 38:               Dust Devil       718630           0       718630
-## 39:             Volcanic Ash       500000           0       500000
-## 40: Marine Thunderstorm Wind       436400       50000       486400
+## 32: Marine Thunderstorm Wind      5857400       50000      5907400
+## 33:                Avalanche      3721800           0      3721800
+## 34:          Cold/Wind Chill      1990000      600000      2590000
+## 35:             Freezing Fog      2182000           0      2182000
+## 36:      Tropical Depression      1737000           0      1737000
+## 37:         Marine High Wind      1297010           0      1297010
+## 38:                   Seiche       980000           0       980000
+## 39:               Dust Devil       718630           0       718630
+## 40:             Volcanic Ash       500000           0       500000
 ## 41:       Marine Strong Wind       418330           0       418330
 ## 42:    Astronomical Low Tide       320000           0       320000
 ## 43:             Funnel Cloud       194600           0       194600
@@ -900,8 +921,8 @@ costs[1:50, ]
 ##                Weather Event     Property        Crop        Total
 ##          rev.sort
 ##  1: -150219678257
-##  2:  -99349945049
-##  3:  -71813712800
+##  2:  -90742527840
+##  3:  -80415709009
 ##  4:  -57240614060
 ##  5:  -18652904943
 ##  6:  -17462129167
@@ -930,15 +951,15 @@ costs[1:50, ]
 ## 29:      91302000
 ## 30:      91351000
 ## 31:      92460000
-## 32:      96278200
-## 33:      97410000
-## 34:      97818000
-## 35:      98263000
-## 36:      98702990
-## 37:      99020000
-## 38:      99281370
-## 39:      99500000
-## 40:      99513600
+## 32:      94092600
+## 33:      96278200
+## 34:      97410000
+## 35:      97818000
+## 36:      98263000
+## 37:      98702990
+## 38:      99020000
+## 39:      99281370
+## 40:      99500000
 ## 41:      99581670
 ## 42:      99680000
 ## 43:      99805400
