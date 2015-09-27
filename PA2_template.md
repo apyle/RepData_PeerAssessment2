@@ -721,20 +721,17 @@ refinement of the results.
 
 
 ```r
-#
-## most of the records were coded with the correct EVTYPE, i.e., the ones in the NOAA weather event list.
-## Now we need to clean up as many of the incorrectly coded EVTYPEs
-#storm.set1$search <- ifelse(storm.set1$EVTYPE == "THUNDERSTORM WINDS", "THUNDERSTORM WIND", storm.set1$EVTYPE)
-#storm.set1$event.list <- ifelse(storm.set1$EVTYPE == "THUNDERSTORM WINDS", "Thunderstorm Wind", 
-#                                ifelse(is.na(storm.set1$EVTYPE), NA, storm.set1$EVTYPE)
-#                                )
-#
-## what's the impact of this matching?
-#records.unmatched <- sum(is.na(storm.set1$event.list))
-#records.matched <- sum(!is.na(storm.set1$event.list))
-#records.ratio <- round(records.matched / records.total, 3)
+# most of the records were coded with the correct EVTYPE, i.e., the ones in the NOAA weather event list.
+# Now we need to clean up as many of the incorrectly coded EVTYPEs
 
 # there are a large number of Thunderstorm Winds that are not coded correctly. 
+is.tstm <- substr(storm.set1$search, 1, 9) == "TSTM WIND"
+storm.set1$event.list[is.tstm] <- c("Thunderstorm Wind")
+# some are spelled out but also include plurals or suffixes
+is.tstm <- substr(storm.set1$search, 1, 17) == "THUNDERSTORM WIND"
+storm.set1$event.list[is.tstm] <- c("Thunderstorm Wind")
+
+# Marine Thunderstorm Winds are also coded as TSTM
 is.marine <- grep("MARINE TSTM", storm.set1$search)
 storm.set1$event.list[is.marine] <- c("Marine Thunderstorm Wind")
 
@@ -752,7 +749,7 @@ records.matched <- sum(!is.na(storm.set1$event.list))
 records.ratio <- round(records.matched / records.total, 3)
 ```
 
-After cleaning up the data there are still a total of 254633 records of which we now have matched 173167 for a total of 68%.
+After cleaning up the data there are still a total of 254633 records of which we now have matched 249124 for a total of 97.8%.
 
 
 ```r
@@ -797,14 +794,14 @@ dangerous[1:47, ]
 ```
 ##                Weather Event Deaths Injuries Total rev.sort
 ##  1:                  Tornado   5633    91346 96979     3021
-##  2:                       NA   1954    12497 14451    85549
+##  2:        Thunderstorm Wind    709     9458 10167    89833
 ##  3:           Excessive Heat   1903     6525  8428    91572
 ##  4:                    Flood    470     6789  7259    92741
 ##  5:                Lightning    816     5230  6046    93954
-##  6:                     Heat    937     2100  3037    96963
-##  7:              Flash Flood    978     1777  2755    97245
-##  8:                Ice Storm     89     1975  2064    97936
-##  9:        Thunderstorm Wind    133     1488  1621    98379
+##  6:                       NA   1378     4527  5905    94095
+##  7:                     Heat    937     2100  3037    96963
+##  8:              Flash Flood    978     1777  2755    97245
+##  9:                Ice Storm     89     1975  2064    97936
 ## 10:             Winter Storm    206     1321  1527    98473
 ## 11:        Hurricane/Typhoon    135     1333  1468    98532
 ## 12:                High Wind    248     1137  1385    98615
@@ -874,17 +871,17 @@ costs[1:50, ]
 ##                Weather Event     Property        Crop        Total
 ##  1:                    Flood 144657709807  5661968450 150319678257
 ##  2:        Hurricane/Typhoon  85336410030  5506117810  90842527840
-##  3:                       NA  71564731542  8950977467  80515709009
+##  3:                       NA  65297945346  8141426525  73439371871
 ##  4:                  Tornado  56925660790   414953270  57340614060
 ##  5:                     Hail  15727367053  3025537890  18752904943
 ##  6:              Flash Flood  16140812067  1421317100  17562129167
 ##  7:                  Drought   1046106000 13972566000  15018672000
-##  8:                Ice Storm   3944927860  5022113500   8967041360
-##  9:           Tropical Storm   7703890550   678346000   8382236550
-## 10:             Winter Storm   6688497251    26944000   6715441251
-## 11:                High Wind   5270046295   638571300   5908617595
-## 12:                 Wildfire   4765114000   295472800   5060586800
-## 13:        Thunderstorm Wind   3483121284   414843050   3897964334
+##  8:        Thunderstorm Wind   9749907481  1224393992  10974301473
+##  9:                Ice Storm   3944927860  5022113500   8967041360
+## 10:           Tropical Storm   7703890550   678346000   8382236550
+## 11:             Winter Storm   6688497251    26944000   6715441251
+## 12:                High Wind   5270046295   638571300   5908617595
+## 13:                 Wildfire   4765114000   295472800   5060586800
 ## 14:               Heavy Rain    694248090   733399800   1427647890
 ## 15:             Frost/Freeze     10480000  1094186000   1104666000
 ## 16:               Heavy Snow    932589142   134653100   1067242242
@@ -926,17 +923,17 @@ costs[1:50, ]
 ##          rev.sort
 ##  1: -150219678257
 ##  2:  -90742527840
-##  3:  -80415709009
+##  3:  -73339371871
 ##  4:  -57240614060
 ##  5:  -18652904943
 ##  6:  -17462129167
 ##  7:  -14918672000
-##  8:   -8867041360
-##  9:   -8282236550
-## 10:   -6615441251
-## 11:   -5808617595
-## 12:   -4960586800
-## 13:   -3797964334
+##  8:  -10874301473
+##  9:   -8867041360
+## 10:   -8282236550
+## 11:   -6615441251
+## 12:   -5808617595
+## 13:   -4960586800
 ## 14:   -1327647890
 ## 15:   -1004666000
 ## 16:    -967242242

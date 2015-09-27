@@ -85,7 +85,7 @@ to analyze the data and find the most dangerous and expensive events we much
 clean up the `EVTYPE` field in the input file. This applies to answering both 
 questions.
 
-```{r}
+```{r cache=FALSE}
 
 # these are NOAA's weather events. Use this list to clean up the values found in the input file
 event.list <- c(
@@ -136,21 +136,18 @@ events listed will be under reported in these cases. Another approach would be t
 evenly between the weather events. However, this proves to be very time consuming for a marginal 
 refinement of the results.
 
-```{r}
-#
-## most of the records were coded with the correct EVTYPE, i.e., the ones in the NOAA weather event list.
-## Now we need to clean up as many of the incorrectly coded EVTYPEs
-#storm.set1$search <- ifelse(storm.set1$EVTYPE == "THUNDERSTORM WINDS", "THUNDERSTORM WIND", storm.set1$EVTYPE)
-#storm.set1$event.list <- ifelse(storm.set1$EVTYPE == "THUNDERSTORM WINDS", "Thunderstorm Wind", 
-#                                ifelse(is.na(storm.set1$EVTYPE), NA, storm.set1$EVTYPE)
-#                                )
-#
-## what's the impact of this matching?
-#records.unmatched <- sum(is.na(storm.set1$event.list))
-#records.matched <- sum(!is.na(storm.set1$event.list))
-#records.ratio <- round(records.matched / records.total, 3)
+```{r cache=FALSE}
+# most of the records were coded with the correct EVTYPE, i.e., the ones in the NOAA weather event list.
+# Now we need to clean up as many of the incorrectly coded EVTYPEs
 
 # there are a large number of Thunderstorm Winds that are not coded correctly. 
+is.tstm <- substr(storm.set1$search, 1, 9) == "TSTM WIND"
+storm.set1$event.list[is.tstm] <- c("Thunderstorm Wind")
+# some are spelled out but also include plurals or suffixes
+is.tstm <- substr(storm.set1$search, 1, 17) == "THUNDERSTORM WIND"
+storm.set1$event.list[is.tstm] <- c("Thunderstorm Wind")
+
+# Marine Thunderstorm Winds are also coded as TSTM
 is.marine <- grep("MARINE TSTM", storm.set1$search)
 storm.set1$event.list[is.marine] <- c("Marine Thunderstorm Wind")
 
@@ -171,7 +168,7 @@ records.ratio <- round(records.matched / records.total, 3)
 
 After cleaning up the data there are still a total of `r records.total` records of which we now have matched `r records.matched` for a total of `r records.ratio * 100`%.
 
-```{r}
+```{r cache=FALSE}
 # the input data records property and crop damages in two fields, one for a numerical amount 
 # and another for the magnitude of damages. We'll need to get the actual number for our analysis
 
@@ -193,7 +190,7 @@ storm.set1 <- storm.set1 %>%
 
 ## Results
 
-```{r dangerous}
+```{r dangerous, cache=FALSE}
 # assemble the reporting data structure from the cleaned up data
 
 # first, assemble the reporting data for dangerous weather events
@@ -213,7 +210,7 @@ dangerous[1:47, ]
 <br />
 <hr />
 
-```{r costly}
+```{r costly, cache=FALSE}
 # assemble the reporting data for weather event costs
 by_event <- group_by(storm.set1, event.list)
 costs <- summarize(by_event, sum(prop.total), sum(crop.total))
