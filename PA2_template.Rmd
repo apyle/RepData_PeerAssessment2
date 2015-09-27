@@ -1,7 +1,7 @@
 ---
 title: "The Most Expensive and Deadliest Weather Events in the United States, 1950-2011"
 author: "apyle@github.com"
-date: "2015-09-16"
+date: "2015-09-27"
 output: 
   html_document:
     keep_md: true
@@ -12,10 +12,17 @@ output:
 
 ## Synopsis
 
-Answer these two questions:
-
-1. Across the United States, which types of events (as indicated in the EVTYPE variable) are most harmful with respect to population health?
-1. Across the United States, which types of events have the greatest economic consequences?
+Weather events can be dangerous and costly in the United States. The United States 
+National Oceanic and Atmospheric Administration's (NOAA) tracks these events and 
+makes it publically available in a storm database. By analyzing this database we 
+can find the weather events that are the most dangerous and most expensive. The 
+data covers over fifty years of events, some of which is not relevant to these 
+estions. After cleaning the database it becomes evident that tornados, thunderstorm 
+wind, excessive heat, flooding, and lightning are the most harmful events for 
+population health. Floods, hurricanes & typhons, tornados, storm tides, and hail 
+cause the most economic damage. These results are important for driving public 
+policy, particularly for tornados and flooding which appear in the top five of 
+both lists.
 
 <br />
 <hr />
@@ -73,10 +80,10 @@ storm.data <- data.table(read.csv(storm.file, colClasses = col_classes))
 # most event entries do not have any reported fatalities, injuries, or damages. Filter those out
 storm.subset <- storm.data[!(FATALITIES == 0 & INJURIES == 0 & PROPDMG == 0 & CROPDMG == 0), ]
 
-# Just for sanity checks. Not really needed for analysis
-my.factor <- as.factor(storm.data$EVTYPE)
-summary(my.factor)
-levels(my.factor)
+## Just for sanity checks. Not really needed for analysis
+#my.factor <- as.factor(storm.data$EVTYPE)
+#summary(my.factor)
+#levels(my.factor)
 
 ```
 
@@ -225,7 +232,7 @@ storm.set1$event.list[is.st] <- c("Storm Tide")
 
 #  Heavy rain has additional terms
 is.rain <- substr(storm.set1$search, 1, 10) == "HEAVY RAIN"
-storm.set1$event.list[is.st] <- c("Heavy Rain")
+storm.set1$event.list[is.rain] <- c("Heavy Rain")
 
 # after our clean-up how many are matched with good EVTYPE values?
 records.total <- count(storm.set1)
@@ -258,6 +265,12 @@ storm.set1 <- storm.set1 %>%
 ```
 
 ## Results
+
+Answer these two questions:
+
+1. Across the United States, which types of events (as indicated in the `EVTYPE` variable) are most harmful with respect to population health?
+1. Across the United States, which types of events have the greatest economic consequences?
+
 
 ```{r dangerous, cache=FALSE}
 # assemble the reporting data structure from the cleaned up data
