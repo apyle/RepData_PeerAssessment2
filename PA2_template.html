@@ -781,6 +781,16 @@ storm.set1$event.list[is.tstm] &lt;- c(&quot;Flash Flood&quot;)
 is.tstm &lt;- substr(storm.set1$search, 1, 4) == &quot;HAIL&quot;
 storm.set1$event.list[is.tstm] &lt;- c(&quot;Hail&quot;)
 
+# Prefer Excessive Heat when there is a descriptor
+is.heat &lt;- substr(storm.set1$search, 1, 9) == &quot;HEAT WAVE&quot;
+storm.set1$event.list[is.heat] &lt;- c(&quot;Excessive Heat&quot;)
+is.heat &lt;- substr(storm.set1$search, 1, 12) == &quot;EXTREME HEAT&quot;
+storm.set1$event.list[is.heat] &lt;- c(&quot;Excessive Heat&quot;)
+
+# Heat often has descriptors that make it hard to code correctly
+is.cold &lt;- substr(storm.set1$search, 1, 12) == &quot;EXTREME COLD&quot;
+storm.set1$event.list[is.cold] &lt;- c(&quot;Extreme Cold/Wind Chill&quot;)
+
 # several items are listed as plural while the standard is singular
 is.plural &lt;- grep(&quot;HIGH WINDS&quot;, storm.set1$search)
 storm.set1$event.list[is.plural] &lt;- c(&quot;High Wind&quot;)
@@ -801,15 +811,23 @@ is.ts &lt;- grep(&quot;TROPICAL STORM&quot;, storm.set1$search)
 storm.set1$event.list[is.ts] &lt;- c(&quot;Tropical Storm&quot;)
 
 # clean up some Tornados
-is.tornado &lt;- substr(storm.set1$search, 1, 8) == &quot;TORNADO&quot;
+is.tornado &lt;- substr(storm.set1$search, 1, 7) == &quot;TORNADO&quot;
 storm.set1$event.list[is.tornado] &lt;- c(&quot;Tornado&quot;)
+
+# Storm Tide comes across as Storm Surge
+is.st &lt;- substr(storm.set1$search, 1, 11) == &quot;STORM SURGE&quot;
+storm.set1$event.list[is.st] &lt;- c(&quot;Storm Tide&quot;)
+
+#  Heavy rain has additional terms
+is.rain &lt;- substr(storm.set1$search, 1, 10) == &quot;HEAVY RAIN&quot;
+storm.set1$event.list[is.st] &lt;- c(&quot;HEAVY RAIN&quot;)
 
 # after our clean-up how many are matched with good EVTYPE values?
 records.total &lt;- count(storm.set1)
 records.unmatched &lt;- sum(is.na(storm.set1$event.list))
 records.matched &lt;- sum(!is.na(storm.set1$event.list))
 records.ratio &lt;- round(records.matched / records.total, 3)</code></pre>
-<p>After cleaning up the data there are still a total of 254633 records of which we now have matched 251911 for a total of 98.9%.</p>
+<p>After cleaning up the data there are still a total of 254633 records of which we now have matched 252404 for a total of 99.1%.</p>
 <pre class="r"><code># the input data records property and crop damages in two fields, one for a numerical amount 
 # and another for the magnitude of damages. We'll need to get the actual number for our analysis
 
@@ -844,12 +862,12 @@ setkey(dangerous, rev.sort)
 
 dangerous[1:47, ]</code></pre>
 <pre><code>##                Weather Event Deaths Injuries Total rev.sort
-##  1:                  Tornado   5633    91346 96979     3021
+##  1:                  Tornado   5658    91364 97022     2978
 ##  2:        Thunderstorm Wind    709     9459 10168    89832
-##  3:           Excessive Heat   1903     6525  8428    91572
+##  3:           Excessive Heat   2180     7074  9254    90746
 ##  4:                    Flood    530     6894  7424    92576
 ##  5:                Lightning    816     5230  6046    93954
-##  6:                       NA   1020     3710  4730    95270
+##  6:                       NA    532     2869  3401    96599
 ##  7:                     Heat    937     2100  3037    96963
 ##  8:              Flash Flood   1018     1785  2803    97197
 ##  9:                Ice Storm     89     1975  2064    97936
@@ -861,36 +879,36 @@ dangerous[1:47, ]</code></pre>
 ## 15:              Rip Current    577      529  1106    98894
 ## 16:                 Wildfire     75      911   986    99014
 ## 17:                 Blizzard    101      805   906    99094
-## 18:               Dust Storm     22      440   462    99538
-## 19:           Tropical Storm     66      383   449    99551
-## 20:           Winter Weather     33      398   431    99569
-## 21:                Avalanche    224      170   394    99606
-## 22:              Strong Wind    103      280   383    99617
-## 23:                Dense Fog     18      342   360    99640
-## 24:               Heavy Rain     98      251   349    99651
-## 25:                High Surf    104      156   260    99740
-## 26:                  Tsunami     33      129   162    99838
-## 27:  Extreme Cold/Wind Chill    125       24   149    99851
+## 18:  Extreme Cold/Wind Chill    287      255   542    99458
+## 19:               Dust Storm     22      440   462    99538
+## 20:           Tropical Storm     66      383   449    99551
+## 21:           Winter Weather     33      398   431    99569
+## 22:                Avalanche    224      170   394    99606
+## 23:              Strong Wind    103      280   383    99617
+## 24:                Dense Fog     18      342   360    99640
+## 25:               Heavy Rain     98      251   349    99651
+## 26:                High Surf    104      156   260    99740
+## 27:                  Tsunami     33      129   162    99838
 ## 28:          Cold/Wind Chill     95       12   107    99893
-## 29: Marine Thunderstorm Wind     19       34    53    99947
-## 30:               Dust Devil      2       43    45    99955
-## 31:       Marine Strong Wind     14       22    36    99964
-## 32:               Waterspout      3       29    32    99968
-## 33:            Coastal Flood      3        2     5    99995
-## 34:                  Drought      0        4     4    99996
-## 35:             Funnel Cloud      0        3     3    99997
-## 36:         Marine High Wind      1        1     2    99998
-## 37:                    Sleet      2        0     2    99998
-## 38:    Astronomical Low Tide      0        0     0   100000
-## 39:              Dense Smoke      0        0     0   100000
-## 40:             Freezing Fog      0        0     0   100000
-## 41:             Frost/Freeze      0        0     0   100000
-## 42:         Lake-Effect Snow      0        0     0   100000
-## 43:          Lakeshore Flood      0        0     0   100000
-## 44:              Marine Hail      0        0     0   100000
-## 45:                   Seiche      0        0     0   100000
-## 46:      Tropical Depression      0        0     0   100000
-## 47:             Volcanic Ash      0        0     0   100000
+## 29:               HEAVY RAIN     24       43    67    99933
+## 30: Marine Thunderstorm Wind     19       34    53    99947
+## 31:               Dust Devil      2       43    45    99955
+## 32:       Marine Strong Wind     14       22    36    99964
+## 33:               Waterspout      3       29    32    99968
+## 34:            Coastal Flood      3        2     5    99995
+## 35:                  Drought      0        4     4    99996
+## 36:             Funnel Cloud      0        3     3    99997
+## 37:         Marine High Wind      1        1     2    99998
+## 38:                    Sleet      2        0     2    99998
+## 39:    Astronomical Low Tide      0        0     0   100000
+## 40:              Dense Smoke      0        0     0   100000
+## 41:             Freezing Fog      0        0     0   100000
+## 42:             Frost/Freeze      0        0     0   100000
+## 43:         Lake-Effect Snow      0        0     0   100000
+## 44:          Lakeshore Flood      0        0     0   100000
+## 45:              Marine Hail      0        0     0   100000
+## 46:                   Seiche      0        0     0   100000
+## 47:      Tropical Depression      0        0     0   100000
 ##                Weather Event Deaths Injuries Total rev.sort</code></pre>
 <pre class="r"><code>#summarize(dangerous$Total)</code></pre>
 <br />
@@ -914,104 +932,104 @@ costs[1:50, ]</code></pre>
 <pre><code>##                Weather Event     Property        Crop        Total
 ##  1:                    Flood 150447447594 10951379050 161398826644
 ##  2:        Hurricane/Typhoon  85336410030  5506117810  90842527840
-##  3:                       NA  57869649150  2766238115  60635887265
-##  4:                  Tornado  56925660790   414953270  57340614060
+##  3:                  Tornado  58530431990   417461470  58947893460
+##  4:               HEAVY RAIN  47964724000      855000  47965579000
 ##  5:                     Hail  15969569553  3025678040  18995247593
 ##  6:              Flash Flood  16732819178  1437153160  18169972338
 ##  7:                  Drought   1046106000 13972566000  15018672000
 ##  8:        Thunderstorm Wind   9750415531  1224394992  10974810523
-##  9:                Ice Storm   3944927860  5022113500   8967041360
-## 10:           Tropical Storm   7714390550   694896000   8409286550
-## 11:                High Wind   6063225043   691821900   6755046943
-## 12:             Winter Storm   6688497251    26944000   6715441251
-## 13:                 Wildfire   4765114000   295472800   5060586800
-## 14:               Heavy Rain    694248090   733399800   1427647890
-## 15:             Frost/Freeze     10480000  1094186000   1104666000
-## 16:               Heavy Snow    932589142   134653100   1067242242
-## 17:                Lightning    928659447    12092090    940751537
-## 18:                 Blizzard    659213950   112060000    771273950
-## 19:           Excessive Heat      7753700   492402000    500155700
-## 20:                     Heat      1797000   401461500    403258500
-## 21:            Coastal Flood    259570560           0    259570560
-## 22:              Strong Wind    175259450    64953500    240212950
-## 23:                  Tsunami    144062000       20000    144082000
-## 24:                High Surf     89955000           0     89955000
-## 25:         Lake-Effect Snow     40115000           0     40115000
-## 26:           Winter Weather     20866000    15000000     35866000
-## 27:                Dense Fog      9674000           0      9674000
-## 28:               Waterspout      9353700           0      9353700
-## 29:  Extreme Cold/Wind Chill      8648000       50000      8698000
-## 30:               Dust Storm      5549000     3100000      8649000
-## 31:          Lakeshore Flood      7540000           0      7540000
-## 32: Marine Thunderstorm Wind      5857400       50000      5907400
-## 33:                Avalanche      3721800           0      3721800
-## 34:          Cold/Wind Chill      1990000      600000      2590000
-## 35:             Freezing Fog      2182000           0      2182000
-## 36:      Tropical Depression      1737000           0      1737000
-## 37:         Marine High Wind      1297010           0      1297010
-## 38:                   Seiche       980000           0       980000
-## 39:               Dust Devil       718630           0       718630
-## 40:             Volcanic Ash       500000           0       500000
-## 41:       Marine Strong Wind       418330           0       418330
-## 42:    Astronomical Low Tide       320000           0       320000
-## 43:             Funnel Cloud       194600           0       194600
-## 44:              Rip Current       163000           0       163000
-## 45:              Dense Smoke       100000           0       100000
-## 46:              Marine Hail         4000           0         4000
-## 47:                    Sleet            0           0            0
-## 48:                       NA           NA          NA           NA
+##  9:                       NA   8221641500  1439301915   9660943415
+## 10:                Ice Storm   3944927860  5022113500   8967041360
+## 11:           Tropical Storm   7714390550   694896000   8409286550
+## 12:                High Wind   6063225043   691821900   6755046943
+## 13:             Winter Storm   6688497251    26944000   6715441251
+## 14:                 Wildfire   4765114000   295472800   5060586800
+## 15:               Heavy Rain    694248090   733399800   1427647890
+## 16:  Extreme Cold/Wind Chill     76385400  1313023000   1389408400
+## 17:             Frost/Freeze     10480000  1094186000   1104666000
+## 18:               Heavy Snow    932589142   134653100   1067242242
+## 19:                Lightning    928659447    12092090    940751537
+## 20:                 Blizzard    659213950   112060000    771273950
+## 21:           Excessive Heat     18528750   503002000    521530750
+## 22:                     Heat      1797000   401461500    403258500
+## 23:            Coastal Flood    259570560           0    259570560
+## 24:              Strong Wind    175259450    64953500    240212950
+## 25:                  Tsunami    144062000       20000    144082000
+## 26:                High Surf     89955000           0     89955000
+## 27:         Lake-Effect Snow     40115000           0     40115000
+## 28:           Winter Weather     20866000    15000000     35866000
+## 29:                Dense Fog      9674000           0      9674000
+## 30:               Waterspout      9353700           0      9353700
+## 31:               Dust Storm      5549000     3100000      8649000
+## 32:          Lakeshore Flood      7540000           0      7540000
+## 33: Marine Thunderstorm Wind      5857400       50000      5907400
+## 34:                Avalanche      3721800           0      3721800
+## 35:          Cold/Wind Chill      1990000      600000      2590000
+## 36:             Freezing Fog      2182000           0      2182000
+## 37:      Tropical Depression      1737000           0      1737000
+## 38:         Marine High Wind      1297010           0      1297010
+## 39:                   Seiche       980000           0       980000
+## 40:               Dust Devil       718630           0       718630
+## 41:             Volcanic Ash       500000           0       500000
+## 42:       Marine Strong Wind       418330           0       418330
+## 43:    Astronomical Low Tide       320000           0       320000
+## 44:             Funnel Cloud       194600           0       194600
+## 45:              Rip Current       163000           0       163000
+## 46:              Dense Smoke       100000           0       100000
+## 47:              Marine Hail         4000           0         4000
+## 48:                    Sleet            0           0            0
 ## 49:                       NA           NA          NA           NA
 ## 50:                       NA           NA          NA           NA
 ##                Weather Event     Property        Crop        Total
 ##          rev.sort
 ##  1: -161298826644
 ##  2:  -90742527840
-##  3:  -60535887265
-##  4:  -57240614060
+##  3:  -58847893460
+##  4:  -47865579000
 ##  5:  -18895247593
 ##  6:  -18069972338
 ##  7:  -14918672000
 ##  8:  -10874810523
-##  9:   -8867041360
-## 10:   -8309286550
-## 11:   -6655046943
-## 12:   -6615441251
-## 13:   -4960586800
-## 14:   -1327647890
-## 15:   -1004666000
-## 16:    -967242242
-## 17:    -840751537
-## 18:    -671273950
-## 19:    -400155700
-## 20:    -303258500
-## 21:    -159570560
-## 22:    -140212950
-## 23:     -44082000
-## 24:      10045000
-## 25:      59885000
-## 26:      64134000
-## 27:      90326000
-## 28:      90646300
-## 29:      91302000
-## 30:      91351000
-## 31:      92460000
-## 32:      94092600
-## 33:      96278200
-## 34:      97410000
-## 35:      97818000
-## 36:      98263000
-## 37:      98702990
-## 38:      99020000
-## 39:      99281370
-## 40:      99500000
-## 41:      99581670
-## 42:      99680000
-## 43:      99805400
-## 44:      99837000
-## 45:      99900000
-## 46:      99996000
-## 47:     100000000
-## 48:            NA
+##  9:   -9560943415
+## 10:   -8867041360
+## 11:   -8309286550
+## 12:   -6655046943
+## 13:   -6615441251
+## 14:   -4960586800
+## 15:   -1327647890
+## 16:   -1289408400
+## 17:   -1004666000
+## 18:    -967242242
+## 19:    -840751537
+## 20:    -671273950
+## 21:    -421530750
+## 22:    -303258500
+## 23:    -159570560
+## 24:    -140212950
+## 25:     -44082000
+## 26:      10045000
+## 27:      59885000
+## 28:      64134000
+## 29:      90326000
+## 30:      90646300
+## 31:      91351000
+## 32:      92460000
+## 33:      94092600
+## 34:      96278200
+## 35:      97410000
+## 36:      97818000
+## 37:      98263000
+## 38:      98702990
+## 39:      99020000
+## 40:      99281370
+## 41:      99500000
+## 42:      99581670
+## 43:      99680000
+## 44:      99805400
+## 45:      99837000
+## 46:      99900000
+## 47:      99996000
+## 48:     100000000
 ## 49:            NA
 ## 50:            NA
 ##          rev.sort</code></pre>

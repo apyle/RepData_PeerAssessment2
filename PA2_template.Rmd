@@ -186,6 +186,16 @@ storm.set1$event.list[is.tstm] <- c("Flash Flood")
 is.tstm <- substr(storm.set1$search, 1, 4) == "HAIL"
 storm.set1$event.list[is.tstm] <- c("Hail")
 
+# Prefer Excessive Heat when there is a descriptor
+is.heat <- substr(storm.set1$search, 1, 9) == "HEAT WAVE"
+storm.set1$event.list[is.heat] <- c("Excessive Heat")
+is.heat <- substr(storm.set1$search, 1, 12) == "EXTREME HEAT"
+storm.set1$event.list[is.heat] <- c("Excessive Heat")
+
+# Heat often has descriptors that make it hard to code correctly
+is.cold <- substr(storm.set1$search, 1, 12) == "EXTREME COLD"
+storm.set1$event.list[is.cold] <- c("Extreme Cold/Wind Chill")
+
 # several items are listed as plural while the standard is singular
 is.plural <- grep("HIGH WINDS", storm.set1$search)
 storm.set1$event.list[is.plural] <- c("High Wind")
@@ -206,8 +216,16 @@ is.ts <- grep("TROPICAL STORM", storm.set1$search)
 storm.set1$event.list[is.ts] <- c("Tropical Storm")
 
 # clean up some Tornados
-is.tornado <- substr(storm.set1$search, 1, 8) == "TORNADO"
+is.tornado <- substr(storm.set1$search, 1, 7) == "TORNADO"
 storm.set1$event.list[is.tornado] <- c("Tornado")
+
+# Storm Tide comes across as Storm Surge
+is.st <- substr(storm.set1$search, 1, 11) == "STORM SURGE"
+storm.set1$event.list[is.st] <- c("Storm Tide")
+
+#  Heavy rain has additional terms
+is.rain <- substr(storm.set1$search, 1, 10) == "HEAVY RAIN"
+storm.set1$event.list[is.st] <- c("Heavy Rain")
 
 # after our clean-up how many are matched with good EVTYPE values?
 records.total <- count(storm.set1)
