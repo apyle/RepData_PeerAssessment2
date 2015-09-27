@@ -29,13 +29,20 @@ both lists.
 
 ## Data
 
-Actual dollars, not adjusted for inflation
+A few things to note about the NOAA data. 
 
-Assumes no duplicate records
+  * Using actual dollar amounts; these have not been adjusted for inflation;
+  * We're assuming there are no duplicate records. 
+  
 <br />
 <hr />
 
 ## Data Processing
+
+Note: all code is maintained in my code repository on [Github][1].
+
+This analysis was performed using RStudio, including tools knitr, data.table, and 
+dplyr.
 
 ```{r setoptions, echo = TRUE}
 # keep the chatter down so the write-up stays clean
@@ -63,6 +70,11 @@ opts_chunk$set(echo = TRUE,
 <br />
 <hr />
 
+The NOAA data file was downloaded from the class website at https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2. 
+Much of the data in the is not relevant to the current questions so the most fields
+where not loaded into RStudio and most records were discarded as they do not have 
+entries for fatalities, injuries, property damage, or crop damage. 
+
 ```{r}
 
 # We only need the injury and fatality counts to answer the first question and the 
@@ -80,16 +92,11 @@ storm.data <- data.table(read.csv(storm.file, colClasses = col_classes))
 # most event entries do not have any reported fatalities, injuries, or damages. Filter those out
 storm.subset <- storm.data[!(FATALITIES == 0 & INJURIES == 0 & PROPDMG == 0 & CROPDMG == 0), ]
 
-## Just for sanity checks. Not really needed for analysis
-#my.factor <- as.factor(storm.data$EVTYPE)
-#summary(my.factor)
-#levels(my.factor)
-
 ```
 
 There are 48 weather events categorized by NOAA. The input data has 985. In order 
-to analyze the data and find the most dangerous and expensive events we much 
-clean up the `EVTYPE` field in the input file. This applies to answering both 
+to analyze the data and find the most dangerous and expensive events we must
+clean up the `EVTYPE` field in the input file. This effort applies to answering both 
 questions.
 
 ```{r cache=FALSE}
@@ -211,8 +218,10 @@ is.plural <- grep("RIP CURRENTS", storm.set1$search)
 storm.set1$event.list[is.plural] <- c("Rip Current")
 
 
-# Hurricanes & Typhons are very damaging. Make sure we include these rare but important events in the results
-# These grep statements will include the entries already matched but does not cause a problem
+# Hurricanes & Typhons are very damaging. Make sure we include these rare but 
+# important events in the results
+# These grep statements will include the entries already matched but does not 
+# cause a problem
 is.ht <- grep("HURRICANE", storm.set1$search)
 storm.set1$event.list[is.ht] <- c("Hurricane/Typhoon")
 is.ht <- grep("TYPHOON", storm.set1$search)
@@ -234,6 +243,10 @@ storm.set1$event.list[is.st] <- c("Storm Tide")
 is.rain <- substr(storm.set1$search, 1, 10) == "HEAVY RAIN"
 storm.set1$event.list[is.rain] <- c("Heavy Rain")
 
+#  Fog can be categorized as Dense Fog
+is.fog <- substr(storm.set1$search, 1, 3) == "FOG"
+storm.set1$event.list[is.rain] <- c("Dense Fog")
+
 # after our clean-up how many are matched with good EVTYPE values?
 records.total <- count(storm.set1)
 records.unmatched <- sum(is.na(storm.set1$event.list))
@@ -242,7 +255,21 @@ records.ratio <- round(records.matched / records.total, 3)
 
 ```
 
-After cleaning up the data there are still a total of `r records.total` records of which we now have matched `r records.matched` for a total of `r records.ratio * 100`%.
+After cleaning up the data there are still a total of `r records.total` records 
+of which we now have matched `r records.matched` entries with the 48 NOAA 
+categories. This is a success rate of `r records.ratio * 100`% records matched.
+
+While it would be preferable to account for 100% of the records, there are still 
+entries that have damages or injuries but fall outside of NOAA's list of weather 
+events. These are items such as Wild Fires. The remaining unmatched items do not 
+change the results of this analysis for finding the weather events with the biggest 
+impact on population safety and economic well being.
+
+The input data records store property and crop damages in two fields. One is for 
+the numerical amount (typically three significant digits) and another for the 
+magnitude of the damages. This is recorded as K for thousands, M for millions, and 
+B for billions of dollars. In order to properly analyze the economic impact of the 
+various events these figures need to be normalized. 
 
 ```{r cache=FALSE}
 # the input data records property and crop damages in two fields, one for a numerical amount 
@@ -311,3 +338,4 @@ costs[1:50, ]
 
 ## Conclusion
 
+[1]: https://github.com/apyle/RepData_PeerAssessment2

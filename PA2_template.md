@@ -24,13 +24,20 @@ both lists.
 
 ## Data
 
-Actual dollars, not adjusted for inflation
+A few things to note about the NOAA data. 
 
-Assumes no duplicate records
+  * Using actual dollar amounts; these have not been adjusted for inflation;
+  * We're assuming there are no duplicate records. 
+  
 <br />
 <hr />
 
 ## Data Processing
+
+Note: all code is maintained in my code repository on [Github][1].
+
+This analysis was performed using RStudio, including tools knitr, data.table, and 
+dplyr.
 
 
 ```r
@@ -78,6 +85,11 @@ opts_chunk$set(echo = TRUE,
 <br />
 <hr />
 
+The NOAA data file was downloaded from the class website at https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2. 
+Much of the data in the is not relevant to the current questions so the most fields
+where not loaded into RStudio and most records were discarded as they do not have 
+entries for fatalities, injuries, property damage, or crop damage. 
+
 
 ```r
 # We only need the injury and fatality counts to answer the first question and the 
@@ -94,16 +106,11 @@ storm.data <- data.table(read.csv(storm.file, colClasses = col_classes))
 
 # most event entries do not have any reported fatalities, injuries, or damages. Filter those out
 storm.subset <- storm.data[!(FATALITIES == 0 & INJURIES == 0 & PROPDMG == 0 & CROPDMG == 0), ]
-
-## Just for sanity checks. Not really needed for analysis
-#my.factor <- as.factor(storm.data$EVTYPE)
-#summary(my.factor)
-#levels(my.factor)
 ```
 
 There are 48 weather events categorized by NOAA. The input data has 985. In order 
-to analyze the data and find the most dangerous and expensive events we much 
-clean up the `EVTYPE` field in the input file. This applies to answering both 
+to analyze the data and find the most dangerous and expensive events we must
+clean up the `EVTYPE` field in the input file. This effort applies to answering both 
 questions.
 
 
@@ -225,8 +232,10 @@ is.plural <- grep("RIP CURRENTS", storm.set1$search)
 storm.set1$event.list[is.plural] <- c("Rip Current")
 
 
-# Hurricanes & Typhons are very damaging. Make sure we include these rare but important events in the results
-# These grep statements will include the entries already matched but does not cause a problem
+# Hurricanes & Typhons are very damaging. Make sure we include these rare but 
+# important events in the results
+# These grep statements will include the entries already matched but does not 
+# cause a problem
 is.ht <- grep("HURRICANE", storm.set1$search)
 storm.set1$event.list[is.ht] <- c("Hurricane/Typhoon")
 is.ht <- grep("TYPHOON", storm.set1$search)
@@ -248,6 +257,10 @@ storm.set1$event.list[is.st] <- c("Storm Tide")
 is.rain <- substr(storm.set1$search, 1, 10) == "HEAVY RAIN"
 storm.set1$event.list[is.rain] <- c("Heavy Rain")
 
+#  Fog can be categorized as Dense Fog
+is.fog <- substr(storm.set1$search, 1, 3) == "FOG"
+storm.set1$event.list[is.rain] <- c("Dense Fog")
+
 # after our clean-up how many are matched with good EVTYPE values?
 records.total <- count(storm.set1)
 records.unmatched <- sum(is.na(storm.set1$event.list))
@@ -255,7 +268,21 @@ records.matched <- sum(!is.na(storm.set1$event.list))
 records.ratio <- round(records.matched / records.total, 3)
 ```
 
-After cleaning up the data there are still a total of 254633 records of which we now have matched 252430 for a total of 99.1%.
+After cleaning up the data there are still a total of 254633 records 
+of which we now have matched 252430 entries with the 48 NOAA 
+categories. This is a success rate of 99.1% records matched.
+
+While it would be preferable to account for 100% of the records, there are still 
+entries that have damages or injuries but fall outside of NOAA's list of weather 
+events. These are items such as Wild Fires. The remaining unmatched items do not 
+change the results of this analysis for finding the weather events with the biggest 
+impact on population safety and economic well being.
+
+The input data records store property and crop damages in two fields. One is for 
+the numerical amount (typically three significant digits) and another for the 
+magnitude of the damages. This is recorded as K for thousands, M for millions, and 
+B for billions of dollars. In order to properly analyze the economic impact of the 
+various events these figures need to be normalized. 
 
 
 ```r
@@ -322,36 +349,36 @@ dangerous[1:47, ]
 ## 15:              Rip Current    577      529  1106    98894
 ## 16:                 Wildfire     75      911   986    99014
 ## 17:                 Blizzard    101      805   906    99094
-## 18:  Extreme Cold/Wind Chill    287      255   542    99458
-## 19:               Dust Storm     22      440   462    99538
-## 20:           Tropical Storm     66      383   449    99551
-## 21:           Winter Weather     33      398   431    99569
-## 22:                Avalanche    224      170   394    99606
-## 23:              Strong Wind    103      280   383    99617
-## 24:                Dense Fog     18      342   360    99640
-## 25:               Heavy Rain     98      255   353    99647
-## 26:                High Surf    104      156   260    99740
-## 27:                  Tsunami     33      129   162    99838
-## 28:          Cold/Wind Chill     95       12   107    99893
-## 29:               Storm Tide     24       43    67    99933
-## 30: Marine Thunderstorm Wind     19       34    53    99947
-## 31:               Dust Devil      2       43    45    99955
-## 32:       Marine Strong Wind     14       22    36    99964
-## 33:               Waterspout      3       29    32    99968
-## 34:            Coastal Flood      3        2     5    99995
-## 35:                  Drought      0        4     4    99996
-## 36:             Funnel Cloud      0        3     3    99997
-## 37:         Marine High Wind      1        1     2    99998
-## 38:                    Sleet      2        0     2    99998
-## 39:    Astronomical Low Tide      0        0     0   100000
-## 40:              Dense Smoke      0        0     0   100000
-## 41:             Freezing Fog      0        0     0   100000
-## 42:             Frost/Freeze      0        0     0   100000
-## 43:         Lake-Effect Snow      0        0     0   100000
-## 44:          Lakeshore Flood      0        0     0   100000
-## 45:              Marine Hail      0        0     0   100000
-## 46:                   Seiche      0        0     0   100000
-## 47:      Tropical Depression      0        0     0   100000
+## 18:                Dense Fog    116      597   713    99287
+## 19:  Extreme Cold/Wind Chill    287      255   542    99458
+## 20:               Dust Storm     22      440   462    99538
+## 21:           Tropical Storm     66      383   449    99551
+## 22:           Winter Weather     33      398   431    99569
+## 23:                Avalanche    224      170   394    99606
+## 24:              Strong Wind    103      280   383    99617
+## 25:                High Surf    104      156   260    99740
+## 26:                  Tsunami     33      129   162    99838
+## 27:          Cold/Wind Chill     95       12   107    99893
+## 28:               Storm Tide     24       43    67    99933
+## 29: Marine Thunderstorm Wind     19       34    53    99947
+## 30:               Dust Devil      2       43    45    99955
+## 31:       Marine Strong Wind     14       22    36    99964
+## 32:               Waterspout      3       29    32    99968
+## 33:            Coastal Flood      3        2     5    99995
+## 34:                  Drought      0        4     4    99996
+## 35:             Funnel Cloud      0        3     3    99997
+## 36:         Marine High Wind      1        1     2    99998
+## 37:                    Sleet      2        0     2    99998
+## 38:    Astronomical Low Tide      0        0     0   100000
+## 39:              Dense Smoke      0        0     0   100000
+## 40:             Freezing Fog      0        0     0   100000
+## 41:             Frost/Freeze      0        0     0   100000
+## 42:         Lake-Effect Snow      0        0     0   100000
+## 43:          Lakeshore Flood      0        0     0   100000
+## 44:              Marine Hail      0        0     0   100000
+## 45:                   Seiche      0        0     0   100000
+## 46:      Tropical Depression      0        0     0   100000
+## 47:             Volcanic Ash      0        0     0   100000
 ##                Weather Event Deaths Injuries Total rev.sort
 ```
 
@@ -395,7 +422,7 @@ costs[1:50, ]
 ## 12:                High Wind   6063225043   691821900   6755046943
 ## 13:             Winter Storm   6688497251    26944000   6715441251
 ## 14:                 Wildfire   4765114000   295472800   5060586800
-## 15:               Heavy Rain   3230998140   795752800   4026750940
+## 15:                Dense Fog   3240672140   795752800   4036424940
 ## 16:  Extreme Cold/Wind Chill     76385400  1313023000   1389408400
 ## 17:             Frost/Freeze     10480000  1094186000   1104666000
 ## 18:               Heavy Snow    932589142   134653100   1067242242
@@ -409,26 +436,26 @@ costs[1:50, ]
 ## 26:                High Surf     89955000           0     89955000
 ## 27:         Lake-Effect Snow     40115000           0     40115000
 ## 28:           Winter Weather     20866000    15000000     35866000
-## 29:                Dense Fog      9674000           0      9674000
-## 30:               Waterspout      9353700           0      9353700
-## 31:               Dust Storm      5549000     3100000      8649000
-## 32:          Lakeshore Flood      7540000           0      7540000
-## 33: Marine Thunderstorm Wind      5857400       50000      5907400
-## 34:                Avalanche      3721800           0      3721800
-## 35:          Cold/Wind Chill      1990000      600000      2590000
-## 36:             Freezing Fog      2182000           0      2182000
-## 37:      Tropical Depression      1737000           0      1737000
-## 38:         Marine High Wind      1297010           0      1297010
-## 39:                   Seiche       980000           0       980000
-## 40:               Dust Devil       718630           0       718630
-## 41:             Volcanic Ash       500000           0       500000
-## 42:       Marine Strong Wind       418330           0       418330
-## 43:    Astronomical Low Tide       320000           0       320000
-## 44:             Funnel Cloud       194600           0       194600
-## 45:              Rip Current       163000           0       163000
-## 46:              Dense Smoke       100000           0       100000
-## 47:              Marine Hail         4000           0         4000
-## 48:                    Sleet            0           0            0
+## 29:               Waterspout      9353700           0      9353700
+## 30:               Dust Storm      5549000     3100000      8649000
+## 31:          Lakeshore Flood      7540000           0      7540000
+## 32: Marine Thunderstorm Wind      5857400       50000      5907400
+## 33:                Avalanche      3721800           0      3721800
+## 34:          Cold/Wind Chill      1990000      600000      2590000
+## 35:             Freezing Fog      2182000           0      2182000
+## 36:      Tropical Depression      1737000           0      1737000
+## 37:         Marine High Wind      1297010           0      1297010
+## 38:                   Seiche       980000           0       980000
+## 39:               Dust Devil       718630           0       718630
+## 40:             Volcanic Ash       500000           0       500000
+## 41:       Marine Strong Wind       418330           0       418330
+## 42:    Astronomical Low Tide       320000           0       320000
+## 43:             Funnel Cloud       194600           0       194600
+## 44:              Rip Current       163000           0       163000
+## 45:              Dense Smoke       100000           0       100000
+## 46:              Marine Hail         4000           0         4000
+## 47:                    Sleet            0           0            0
+## 48:                       NA           NA          NA           NA
 ## 49:                       NA           NA          NA           NA
 ## 50:                       NA           NA          NA           NA
 ##                Weather Event     Property        Crop        Total
@@ -447,7 +474,7 @@ costs[1:50, ]
 ## 12:   -6655046943
 ## 13:   -6615441251
 ## 14:   -4960586800
-## 15:   -3926750940
+## 15:   -3936424940
 ## 16:   -1289408400
 ## 17:   -1004666000
 ## 18:    -967242242
@@ -461,26 +488,26 @@ costs[1:50, ]
 ## 26:      10045000
 ## 27:      59885000
 ## 28:      64134000
-## 29:      90326000
-## 30:      90646300
-## 31:      91351000
-## 32:      92460000
-## 33:      94092600
-## 34:      96278200
-## 35:      97410000
-## 36:      97818000
-## 37:      98263000
-## 38:      98702990
-## 39:      99020000
-## 40:      99281370
-## 41:      99500000
-## 42:      99581670
-## 43:      99680000
-## 44:      99805400
-## 45:      99837000
-## 46:      99900000
-## 47:      99996000
-## 48:     100000000
+## 29:      90646300
+## 30:      91351000
+## 31:      92460000
+## 32:      94092600
+## 33:      96278200
+## 34:      97410000
+## 35:      97818000
+## 36:      98263000
+## 37:      98702990
+## 38:      99020000
+## 39:      99281370
+## 40:      99500000
+## 41:      99581670
+## 42:      99680000
+## 43:      99805400
+## 44:      99837000
+## 45:      99900000
+## 46:      99996000
+## 47:     100000000
+## 48:            NA
 ## 49:            NA
 ## 50:            NA
 ##          rev.sort
@@ -488,3 +515,4 @@ costs[1:50, ]
 
 ## Conclusion
 
+[1]: https://github.com/apyle/RepData_PeerAssessment2
