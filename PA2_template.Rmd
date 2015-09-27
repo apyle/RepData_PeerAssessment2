@@ -146,10 +146,53 @@ storm.set1$event.list[is.tstm] <- c("Thunderstorm Wind")
 # some are spelled out but also include plurals or suffixes
 is.tstm <- substr(storm.set1$search, 1, 17) == "THUNDERSTORM WIND"
 storm.set1$event.list[is.tstm] <- c("Thunderstorm Wind")
+# some are spelled out with extra plurals
+is.tstm <- substr(storm.set1$search, 1, 19) == "THUNDERSTORMS WINDS"
+storm.set1$event.list[is.tstm] <- c("Thunderstorm Wind")
 
 # Marine Thunderstorm Winds are also coded as TSTM
 is.marine <- grep("MARINE TSTM", storm.set1$search)
 storm.set1$event.list[is.marine] <- c("Marine Thunderstorm Wind")
+
+# Flooding is categorized in many ways
+is.flood <- grep("URBAN/SML STREAM FLD", storm.set1$search)
+storm.set1$event.list[is.flood] <- c("Flood")
+is.flood <- grep("FLOOD/FLASH FLOOD", storm.set1$search)
+storm.set1$event.list[is.flood] <- c("Flood")
+is.flood <- grep("RIVER FLOOD", storm.set1$search)
+storm.set1$event.list[is.flood] <- c("Flood")
+is.flood <- grep("URBAN FLOODING", storm.set1$search)
+storm.set1$event.list[is.flood] <- c("Flood")
+is.flood <- grep("URBAN FLOOD", storm.set1$search)
+storm.set1$event.list[is.flood] <- c("Flood")
+is.flood <- grep("FLOODING", storm.set1$search)
+storm.set1$event.list[is.flood] <- c("Flood")
+is.flood <- grep("COASTAL FLOODING", storm.set1$search)
+storm.set1$event.list[is.flood] <- c("Flood")
+is.flood <- grep("RIVER FLOODING", storm.set1$search)
+storm.set1$event.list[is.flood] <- c("Flood")
+is.flood <- grep("FLOOD/RAIN/WINDS", storm.set1$search)
+storm.set1$event.list[is.flood] <- c("Flood")
+is.flood <- grep("RIVER FLOODING", storm.set1$search)
+storm.set1$event.list[is.flood] <- c("Flood")
+is.flood <- grep("FLOODS", storm.set1$search)
+storm.set1$event.list[is.flood] <- c("Flood")
+
+# there are a large number of Flash Floods that are not coded correctly. 
+is.tstm <- substr(storm.set1$search, 1, 11) == "FLASH FLOOD"
+storm.set1$event.list[is.tstm] <- c("Flash Flood")
+
+# there are a large number of Hail events that are not coded correctly. 
+is.tstm <- substr(storm.set1$search, 1, 4) == "HAIL"
+storm.set1$event.list[is.tstm] <- c("Hail")
+
+# several items are listed as plural while the standard is singular
+is.plural <- grep("HIGH WINDS", storm.set1$search)
+storm.set1$event.list[is.plural] <- c("High Wind")
+
+is.plural <- grep("RIP CURRENTS", storm.set1$search)
+storm.set1$event.list[is.plural] <- c("Rip Current")
+
 
 # Hurricanes & Typhons are very damaging. Make sure we include these rare but important events in the results
 # These grep statements will include the entries already matched but does not cause a problem
@@ -157,6 +200,14 @@ is.ht <- grep("HURRICANE", storm.set1$search)
 storm.set1$event.list[is.ht] <- c("Hurricane/Typhoon")
 is.ht <- grep("TYPHOON", storm.set1$search)
 storm.set1$event.list[is.ht] <- c("Hurricane/Typhoon")
+
+# Tropical Storms are too
+is.ts <- grep("TROPICAL STORM", storm.set1$search)
+storm.set1$event.list[is.ts] <- c("Tropical Storm")
+
+# clean up some Tornados
+is.tornado <- substr(storm.set1$search, 1, 8) == "TORNADO"
+storm.set1$event.list[is.tornado] <- c("Tornado")
 
 # after our clean-up how many are matched with good EVTYPE values?
 records.total <- count(storm.set1)

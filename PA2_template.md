@@ -730,10 +730,53 @@ storm.set1$event.list[is.tstm] <- c("Thunderstorm Wind")
 # some are spelled out but also include plurals or suffixes
 is.tstm <- substr(storm.set1$search, 1, 17) == "THUNDERSTORM WIND"
 storm.set1$event.list[is.tstm] <- c("Thunderstorm Wind")
+# some are spelled out with extra plurals
+is.tstm <- substr(storm.set1$search, 1, 19) == "THUNDERSTORMS WINDS"
+storm.set1$event.list[is.tstm] <- c("Thunderstorm Wind")
 
 # Marine Thunderstorm Winds are also coded as TSTM
 is.marine <- grep("MARINE TSTM", storm.set1$search)
 storm.set1$event.list[is.marine] <- c("Marine Thunderstorm Wind")
+
+# Flooding is categorized in many ways
+is.flood <- grep("URBAN/SML STREAM FLD", storm.set1$search)
+storm.set1$event.list[is.flood] <- c("Flood")
+is.flood <- grep("FLOOD/FLASH FLOOD", storm.set1$search)
+storm.set1$event.list[is.flood] <- c("Flood")
+is.flood <- grep("RIVER FLOOD", storm.set1$search)
+storm.set1$event.list[is.flood] <- c("Flood")
+is.flood <- grep("URBAN FLOODING", storm.set1$search)
+storm.set1$event.list[is.flood] <- c("Flood")
+is.flood <- grep("URBAN FLOOD", storm.set1$search)
+storm.set1$event.list[is.flood] <- c("Flood")
+is.flood <- grep("FLOODING", storm.set1$search)
+storm.set1$event.list[is.flood] <- c("Flood")
+is.flood <- grep("COASTAL FLOODING", storm.set1$search)
+storm.set1$event.list[is.flood] <- c("Flood")
+is.flood <- grep("RIVER FLOODING", storm.set1$search)
+storm.set1$event.list[is.flood] <- c("Flood")
+is.flood <- grep("FLOOD/RAIN/WINDS", storm.set1$search)
+storm.set1$event.list[is.flood] <- c("Flood")
+is.flood <- grep("RIVER FLOODING", storm.set1$search)
+storm.set1$event.list[is.flood] <- c("Flood")
+is.flood <- grep("FLOODS", storm.set1$search)
+storm.set1$event.list[is.flood] <- c("Flood")
+
+# there are a large number of Flash Floods that are not coded correctly. 
+is.tstm <- substr(storm.set1$search, 1, 11) == "FLASH FLOOD"
+storm.set1$event.list[is.tstm] <- c("Flash Flood")
+
+# there are a large number of Hail events that are not coded correctly. 
+is.tstm <- substr(storm.set1$search, 1, 4) == "HAIL"
+storm.set1$event.list[is.tstm] <- c("Hail")
+
+# several items are listed as plural while the standard is singular
+is.plural <- grep("HIGH WINDS", storm.set1$search)
+storm.set1$event.list[is.plural] <- c("High Wind")
+
+is.plural <- grep("RIP CURRENTS", storm.set1$search)
+storm.set1$event.list[is.plural] <- c("Rip Current")
+
 
 # Hurricanes & Typhons are very damaging. Make sure we include these rare but important events in the results
 # These grep statements will include the entries already matched but does not cause a problem
@@ -742,6 +785,14 @@ storm.set1$event.list[is.ht] <- c("Hurricane/Typhoon")
 is.ht <- grep("TYPHOON", storm.set1$search)
 storm.set1$event.list[is.ht] <- c("Hurricane/Typhoon")
 
+# Tropical Storms are too
+is.ts <- grep("TROPICAL STORM", storm.set1$search)
+storm.set1$event.list[is.ts] <- c("Tropical Storm")
+
+# clean up some Tornados
+is.tornado <- substr(storm.set1$search, 1, 8) == "TORNADO"
+storm.set1$event.list[is.tornado] <- c("Tornado")
+
 # after our clean-up how many are matched with good EVTYPE values?
 records.total <- count(storm.set1)
 records.unmatched <- sum(is.na(storm.set1$event.list))
@@ -749,7 +800,7 @@ records.matched <- sum(!is.na(storm.set1$event.list))
 records.ratio <- round(records.matched / records.total, 3)
 ```
 
-After cleaning up the data there are still a total of 254633 records of which we now have matched 249124 for a total of 97.8%.
+After cleaning up the data there are still a total of 254633 records of which we now have matched 251911 for a total of 98.9%.
 
 
 ```r
@@ -794,25 +845,25 @@ dangerous[1:47, ]
 ```
 ##                Weather Event Deaths Injuries Total rev.sort
 ##  1:                  Tornado   5633    91346 96979     3021
-##  2:        Thunderstorm Wind    709     9458 10167    89833
+##  2:        Thunderstorm Wind    709     9459 10168    89832
 ##  3:           Excessive Heat   1903     6525  8428    91572
-##  4:                    Flood    470     6789  7259    92741
+##  4:                    Flood    530     6894  7424    92576
 ##  5:                Lightning    816     5230  6046    93954
-##  6:                       NA   1378     4527  5905    94095
+##  6:                       NA   1020     3710  4730    95270
 ##  7:                     Heat    937     2100  3037    96963
-##  8:              Flash Flood    978     1777  2755    97245
+##  8:              Flash Flood   1018     1785  2803    97197
 ##  9:                Ice Storm     89     1975  2064    97936
-## 10:             Winter Storm    206     1321  1527    98473
-## 11:        Hurricane/Typhoon    135     1333  1468    98532
-## 12:                High Wind    248     1137  1385    98615
+## 10:                High Wind    289     1500  1789    98211
+## 11:             Winter Storm    206     1321  1527    98473
+## 12:        Hurricane/Typhoon    135     1333  1468    98532
 ## 13:                     Hail     15     1361  1376    98624
 ## 14:               Heavy Snow    127     1021  1148    98852
-## 15:                 Wildfire     75      911   986    99014
-## 16:                 Blizzard    101      805   906    99094
-## 17:              Rip Current    368      232   600    99400
+## 15:              Rip Current    577      529  1106    98894
+## 16:                 Wildfire     75      911   986    99014
+## 17:                 Blizzard    101      805   906    99094
 ## 18:               Dust Storm     22      440   462    99538
-## 19:           Winter Weather     33      398   431    99569
-## 20:           Tropical Storm     58      340   398    99602
+## 19:           Tropical Storm     66      383   449    99551
+## 20:           Winter Weather     33      398   431    99569
 ## 21:                Avalanche    224      170   394    99606
 ## 22:              Strong Wind    103      280   383    99617
 ## 23:                Dense Fog     18      342   360    99640
@@ -869,18 +920,18 @@ costs[1:50, ]
 
 ```
 ##                Weather Event     Property        Crop        Total
-##  1:                    Flood 144657709807  5661968450 150319678257
+##  1:                    Flood 150447447594 10951379050 161398826644
 ##  2:        Hurricane/Typhoon  85336410030  5506117810  90842527840
-##  3:                       NA  65297945346  8141426525  73439371871
+##  3:                       NA  57869649150  2766238115  60635887265
 ##  4:                  Tornado  56925660790   414953270  57340614060
-##  5:                     Hail  15727367053  3025537890  18752904943
-##  6:              Flash Flood  16140812067  1421317100  17562129167
+##  5:                     Hail  15969569553  3025678040  18995247593
+##  6:              Flash Flood  16732819178  1437153160  18169972338
 ##  7:                  Drought   1046106000 13972566000  15018672000
-##  8:        Thunderstorm Wind   9749907481  1224393992  10974301473
+##  8:        Thunderstorm Wind   9750415531  1224394992  10974810523
 ##  9:                Ice Storm   3944927860  5022113500   8967041360
-## 10:           Tropical Storm   7703890550   678346000   8382236550
-## 11:             Winter Storm   6688497251    26944000   6715441251
-## 12:                High Wind   5270046295   638571300   5908617595
+## 10:           Tropical Storm   7714390550   694896000   8409286550
+## 11:                High Wind   6063225043   691821900   6755046943
+## 12:             Winter Storm   6688497251    26944000   6715441251
 ## 13:                 Wildfire   4765114000   295472800   5060586800
 ## 14:               Heavy Rain    694248090   733399800   1427647890
 ## 15:             Frost/Freeze     10480000  1094186000   1104666000
@@ -912,27 +963,27 @@ costs[1:50, ]
 ## 41:       Marine Strong Wind       418330           0       418330
 ## 42:    Astronomical Low Tide       320000           0       320000
 ## 43:             Funnel Cloud       194600           0       194600
-## 44:              Dense Smoke       100000           0       100000
-## 45:              Marine Hail         4000           0         4000
-## 46:              Rip Current         1000           0         1000
+## 44:              Rip Current       163000           0       163000
+## 45:              Dense Smoke       100000           0       100000
+## 46:              Marine Hail         4000           0         4000
 ## 47:                    Sleet            0           0            0
 ## 48:                       NA           NA          NA           NA
 ## 49:                       NA           NA          NA           NA
 ## 50:                       NA           NA          NA           NA
 ##                Weather Event     Property        Crop        Total
 ##          rev.sort
-##  1: -150219678257
+##  1: -161298826644
 ##  2:  -90742527840
-##  3:  -73339371871
+##  3:  -60535887265
 ##  4:  -57240614060
-##  5:  -18652904943
-##  6:  -17462129167
+##  5:  -18895247593
+##  6:  -18069972338
 ##  7:  -14918672000
-##  8:  -10874301473
+##  8:  -10874810523
 ##  9:   -8867041360
-## 10:   -8282236550
-## 11:   -6615441251
-## 12:   -5808617595
+## 10:   -8309286550
+## 11:   -6655046943
+## 12:   -6615441251
 ## 13:   -4960586800
 ## 14:   -1327647890
 ## 15:   -1004666000
@@ -964,9 +1015,9 @@ costs[1:50, ]
 ## 41:      99581670
 ## 42:      99680000
 ## 43:      99805400
-## 44:      99900000
-## 45:      99996000
-## 46:      99999000
+## 44:      99837000
+## 45:      99900000
+## 46:      99996000
 ## 47:     100000000
 ## 48:            NA
 ## 49:            NA
