@@ -13,11 +13,11 @@ output:
 ## Synopsis
 
 Weather events can be dangerous and costly in the United States. The United States 
-National Oceanic and Atmospheric Administration's (NOAA) tracks these events and 
+National Oceanic and Atmospheric Administration (NOAA) tracks these events and 
 makes it publically available in a storm database. By analyzing this database we 
 can find the weather events that are the most dangerous and most expensive. The 
 data covers over fifty years of events, some of which is not relevant to these 
-estions. After cleaning the database it becomes evident that tornados, thunderstorm 
+questions. After cleaning the database it becomes evident that tornados, thunderstorm 
 wind, excessive heat, flooding, and lightning are the most harmful events for 
 population health. Floods, hurricanes & typhons, tornados, storm tides, and hail 
 cause the most economic damage. These results are important for driving public 
@@ -282,14 +282,18 @@ various events these figures need to be normalized.
 storm.set1 <- storm.set1 %>%
         mutate(prop.total = PROPDMG) %>%
         mutate(prop.total = ifelse(PROPDMGEXP == "K", prop.total * 1000, prop.total)) %>%
+        mutate(prop.total = ifelse(PROPDMGEXP == "k", prop.total * 1000, prop.total)) %>%
         mutate(prop.total = ifelse(PROPDMGEXP == "M", prop.total * 1000000, prop.total)) %>%
+        mutate(prop.total = ifelse(PROPDMGEXP == "m", prop.total * 1000000, prop.total)) %>%
         mutate(prop.total = ifelse(PROPDMGEXP == "B", prop.total * 1000000000, prop.total))
 
 # and do the same for crop damage costs
 storm.set1 <- storm.set1 %>%
         mutate(crop.total = CROPDMG) %>%
         mutate(crop.total = ifelse(CROPDMGEXP == "K", crop.total * 1000, crop.total)) %>%
+        mutate(crop.total = ifelse(CROPDMGEXP == "k", crop.total * 1000, crop.total)) %>%
         mutate(crop.total = ifelse(CROPDMGEXP == "M", crop.total * 1000000, crop.total)) %>%
+        mutate(crop.total = ifelse(CROPDMGEXP == "m", crop.total * 1000000, crop.total)) %>%
         mutate(crop.total = ifelse(CROPDMGEXP == "B", crop.total * 1000000000, crop.total))
 
 ```
@@ -317,7 +321,8 @@ dangerous <- dangerous %>%
 setkey(dangerous, rev.sort)
 
 g <- ggplot(dangerous, aes(x = WeatherEvent, y = Total)) +
-        geom_point() +
+        geom_bar(stat = "identity") +
+        theme(legend.position = "none", axis.text.x = element_text(angle = 45, hjust = 1)) +
         xlab("Weather Event") +
         ylab("Total Injuries and Fatalities") +
         ggtitle("The Most Dangerous Weather Events in the United States")
@@ -356,7 +361,8 @@ costs <- costs %>%
 setkey(costs, rev.sort)
 
 g <- ggplot(costs, aes(x = WeatherEvent, y = Total)) +
-        geom_point() +
+        geom_bar(stat = "identity") +
+        theme(legend.position = "none", axis.text.x = element_text(angle = 45, hjust = 1)) +
         xlab("Weather Event") +
         ylab("Total Costs in Dollars") +
         ggtitle("The Most Expensive Weather Events in the United States")
@@ -379,3 +385,22 @@ billion dollars in damages for both property and agriculture.
 ![](figure/cost.png)
 
 [1]: https://github.com/apyle/RepData_PeerAssessment2
+
+```{r echo=FALSE}
+
+# plotting idea from http://rpubs.com/jmallmann/rr_peer_assignment2
+#barplot(summaryStdEventTypesAffectingHealth$newTotalAffected[1:10], beside = TRUE,
+#        names.arg = summaryStdEventTypesAffectingHealth$StandardEventType[1:10],
+#        legend = summaryStdEventTypesAffectingHealth$StandardEventType[1:10], 
+#        main = "Standardized Event Types Most Affecting Population Health\nJan 1996 - Nov 2011",
+#        col = c("lightblue", "mistyrose", "lightcyan", "lavender", "cornsilk", "salmon", "peachpuff", "palegreen", "orchid", "lightyellow"),
+#        ylim = c(0, 23000))
+
+
+# More plotting from http://rpubs.com/mindyng/113717
+# ggplot(susS,aes(event,fatalities.injuries)) + 
+#         geom_point(aes(colour=event)) + 
+#         theme(legend.position="none",axis.text.x = element_text(angle = 45, hjust = 1)) + 
+#         ggtitle('Fatalities & Injuries from Major Disasters')
+
+```

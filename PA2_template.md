@@ -8,11 +8,11 @@ apyle@github.com
 ## Synopsis
 
 Weather events can be dangerous and costly in the United States. The United States 
-National Oceanic and Atmospheric Administration's (NOAA) tracks these events and 
+National Oceanic and Atmospheric Administration (NOAA) tracks these events and 
 makes it publically available in a storm database. By analyzing this database we 
 can find the weather events that are the most dangerous and most expensive. The 
 data covers over fifty years of events, some of which is not relevant to these 
-estions. After cleaning the database it becomes evident that tornados, thunderstorm 
+questions. After cleaning the database it becomes evident that tornados, thunderstorm 
 wind, excessive heat, flooding, and lightning are the most harmful events for 
 population health. Floods, hurricanes & typhons, tornados, storm tides, and hail 
 cause the most economic damage. These results are important for driving public 
@@ -296,14 +296,18 @@ various events these figures need to be normalized.
 storm.set1 <- storm.set1 %>%
         mutate(prop.total = PROPDMG) %>%
         mutate(prop.total = ifelse(PROPDMGEXP == "K", prop.total * 1000, prop.total)) %>%
+        mutate(prop.total = ifelse(PROPDMGEXP == "k", prop.total * 1000, prop.total)) %>%
         mutate(prop.total = ifelse(PROPDMGEXP == "M", prop.total * 1000000, prop.total)) %>%
+        mutate(prop.total = ifelse(PROPDMGEXP == "m", prop.total * 1000000, prop.total)) %>%
         mutate(prop.total = ifelse(PROPDMGEXP == "B", prop.total * 1000000000, prop.total))
 
 # and do the same for crop damage costs
 storm.set1 <- storm.set1 %>%
         mutate(crop.total = CROPDMG) %>%
         mutate(crop.total = ifelse(CROPDMGEXP == "K", crop.total * 1000, crop.total)) %>%
+        mutate(crop.total = ifelse(CROPDMGEXP == "k", crop.total * 1000, crop.total)) %>%
         mutate(crop.total = ifelse(CROPDMGEXP == "M", crop.total * 1000000, crop.total)) %>%
+        mutate(crop.total = ifelse(CROPDMGEXP == "m", crop.total * 1000000, crop.total)) %>%
         mutate(crop.total = ifelse(CROPDMGEXP == "B", crop.total * 1000000000, crop.total))
 ```
 
@@ -331,7 +335,8 @@ dangerous <- dangerous %>%
 setkey(dangerous, rev.sort)
 
 g <- ggplot(dangerous, aes(x = WeatherEvent, y = Total)) +
-        geom_point() +
+        geom_bar(stat = "identity") +
+        theme(legend.position = "none", axis.text.x = element_text(angle = 45, hjust = 1)) +
         xlab("Weather Event") +
         ylab("Total Injuries and Fatalities") +
         ggtitle("The Most Dangerous Weather Events in the United States")
@@ -395,7 +400,8 @@ costs <- costs %>%
 setkey(costs, rev.sort)
 
 g <- ggplot(costs, aes(x = WeatherEvent, y = Total)) +
-        geom_point() +
+        geom_bar(stat = "identity") +
+        theme(legend.position = "none", axis.text.x = element_text(angle = 45, hjust = 1)) +
         xlab("Weather Event") +
         ylab("Total Costs in Dollars") +
         ggtitle("The Most Expensive Weather Events in the United States")
@@ -426,10 +432,10 @@ costs[1:5, ]
 ```
 ##         WeatherEvent     Property        Crop        Total      rev.sort
 ## 1:             Flood 150442587594 10951026050 161393613644 -161293613644
-## 2: Hurricane/Typhoon  85336410030  5506117810  90842527840  -90742527840
-## 3:           Tornado  58530431990   417461470  58947893460  -58847893460
+## 2: Hurricane/Typhoon  85356410010  5516117800  90872527810  -90772527810
+## 3:           Tornado  58541931979   417461470  58959393449  -58859393449
 ## 4:        Storm Tide  47964724000      855000  47965579000  -47865579000
-## 5:              Hail  15969569553  3025678040  18995247593  -18895247593
+## 5:              Hail  15974469548  3026094623  19000564171  -18900564171
 ```
 
 As can be seen from the above table and the chart below, Floods are the most 
@@ -441,3 +447,5 @@ billion dollars in damages for both property and agriculture.
 ![](figure/cost.png)
 
 [1]: https://github.com/apyle/RepData_PeerAssessment2
+
+
